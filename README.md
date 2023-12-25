@@ -1,12 +1,16 @@
-# urso de Hadoop
+# Construindo Big Data com Cluster de Hadoop e Ecossistema
+
+<p style="color: red"><b>Seção 1-5 foi extraído do curso no youtube. O curso está depreciado devido a desatualização do ambiente</b></p>
+
+***curso:** https://www.udemy.com/course/construindo-big-data-com-cluster-de-hadoop-e-ecossistema/*
+
+***outros:***
 
 *https://www.youtube.com/playlist?list=PLeFetwYAi-F_l-NP-TUE2MqKeu_haMP79* 
 
 *https://github.com/toticavalcanti/Curso_Hadoop*
 
-*VM possui pyspark 1.6.0*
-
-## 01 - Baixando e configurando a máquina Cloudera
+<h2 style="color: red">1 - Baixando e configurando a máquina Cloudera </h2>
 
 **Download Cloudera-VM**<br>
 
@@ -39,7 +43,7 @@ https://winscp.net/download/WinSCP-6.1.2-Setup.exe
 
 <img src="_images/104.png" width=40%> </img>
 
-## 2 - Componentes principais Hadoop
+<h2 style="color: red">2 - Componentes principais </h2>
 
 **Há dois tipos de nós básicos**
 
@@ -60,7 +64,7 @@ Tanto o HDFS como o YARN têm vários serviços mestres responsáveis pela coord
 - **ApplicationMaster (MESTRE)** coordena uma aplicação em particular executada no cluster de acordo com o escalonamento feito pelo ResourceManager
 - **NodeManager (TRABALHADOR)** executa e administra tarefas de processamento em um nó individual e informa sobre a saúde e o status das tarefas à medida que elas executam.
 
-## 3 - Comandos básicos Hadoop
+<h2 style="color: red">3 - Comandos básicos </h2>
 
 `hadoop` O comando principal do Hadoop.
 
@@ -116,7 +120,7 @@ Algumas das funcionalidades do HUE incluem:
 
 <img src="_images/303.png" width=100%> </img>
 
-## 4 - Contagem de palavras usando PySpark
+<h2 style="color: red">4 - Contagem de palavras usando PySpark  </h2>
 
 Entre no shell do Spark digitando `pyspark`
 
@@ -152,7 +156,7 @@ for word in wordcount.collect():
 wordcount.saveAsTextFile("/user/vlsf2/txts")
 ```
 
-## 5 - Ingestão de dados com o Flume
+<h2 style="color: red">5 - Ingestão de dados com Flume  </h2>
 
 - **Twitter**: fonte de dados (streaming) 
 - **Flume**: coletor dos dados
@@ -303,3 +307,172 @@ Instalar o telnet no Máquina Cloudera `yum -y install telnet`
 <p style="color: #1A5276"><b>Terminal 2</b></p>
 
 `telnet localhost 44444` 
+
+## 6 - Características iniciais de um ambiente distribuído
+
+1. **Client:**
+   - Entidade que faz solicitações ou envia comandos a um sistema ou serviço distribuído.
+2. **Management Node:**
+   - Nó responsável por controlar e gerenciar outros nós no sistema distribuído, coordenando tarefas e alocando recursos.
+3. **Worker Node:**
+   - Nó que executa tarefas específicas ou processa dados conforme instruído, sendo coordenado e gerenciado pelos nós de gerenciamento.
+
+<img src="_images/601.gif" width="50%"></img>
+
+**Aplicação em Sistemas Distribuídos de Processamento de Dados:**
+
+- Em sistemas como Apache Hadoop ou Apache Spark, o "Client" pode ser a aplicação ou usuário que envia trabalhos para processamento distribuído.
+- O "Management Node" pode ser representado por componentes como ResourceManager no Hadoop ou o Master Node no Spark, que gerenciam a execução e coordenação dos trabalhos.
+- Os "Worker Nodes" seriam os nós que realizam efetivamente o processamento de dados, como os DataNodes no Hadoop ou os Worker Nodes no Spark.
+
+<img src="_images/602.png" width="70%"></img>
+
+| **Módulo** | **Função**                                                   | **Descrição**                                                |
+| ---------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ZooKeeper  | Serviço de Coordenação Distribuída                           | Fornece serviços para coordenação e gerenciamento de configuração em sistemas distribuídos. Amplamente usado para sincronização, eleição de líder e gerenciamento de configurações. |
+| Oozie      | Orquestração de Fluxo de Trabalho                            | Sistema de orquestração que permite a criação, agendamento e coordenação de fluxos de trabalho complexos no ambiente Hadoop. Permite a execução sequencial ou condicional de tarefas, facilitando o gerenciamento de processos de dados em grande escala. |
+| Spark      | Motor de Processamento de Dados em Memória                   | Framework de processamento de dados distribuído e em memória. Suporta análise de dados em larga escala, processamento de batch e stream, e aprendizado de máquina. |
+| Kafka      | Sistema de Mensagens Distribuídas                            | Plataforma de streaming distribuída para ingestão, armazenamento e processamento em tempo real de fluxos de dados. |
+| Hive       | Armazenamento e Consulta de Dados                            | Camada de armazenamento e consulta de dados que utiliza a linguagem de consulta HiveQL para interagir com dados armazenados no HDFS. |
+| HBase      | Banco de Dados NoSQL Distribuído                             | Banco de dados NoSQL distribuído e orientado a colunas que fornece acesso rápido a grandes volumes de dados. |
+| Solr       | Plataforma de Pesquisa de Texto Completa                     | Plataforma de pesquisa de texto completa construída sobre o Apache Lucene. Fornece recursos avançados de pesquisa, indexação e recuperação de dados. |
+| Flume      | Coleta, Agregação e Movimentação de Dados                    | Ferramenta para coleta, agregação e movimentação de grandes volumes de dados de logs de diferentes fontes para sistemas de armazenamento centralizados. |
+| Sqoop      | Transferência de Dados entre Hadoop e Bancos de Dados Relacionais | Ferramenta para transferência eficiente de dados entre bancos de dados relacionais e o HDFS. |
+| Mahout     | Biblioteca de Aprendizado de Máquina                         | Biblioteca de aprendizado de máquina para Hadoop, projetada para implementar algoritmos escaláveis e distribuídos de aprendizado de máquina. |
+| Pig        | Linguagem e Plataforma para Análise de Dados                 | Permite a expressão de transformações de dados em uma linguagem chamada Pig Latin, facilitando a escrita de programas para processamento de dados em ambientes Hadoop. |
+
+<div style="float: left">
+    <img src="_images/604.png" width="100px" alt="Imagem">
+</div>
+
+
+
+
+
+1. **Hive Clients:**
+   - Aplicativos ou ferramentas que interagem com o Apache Hive para executar consultas ou gerenciar metadados.
+2. **Hive Services:**
+   - Componentes principais que incluem o Hive Driver, Hive Server e Hive CLI, fornecendo funcionalidades essenciais do Apache Hive.
+3. **Hive Metastore:**
+   - Armazena metadados relacionados a dados no Hadoop, como informações sobre tabelas, partições e esquemas.
+4. **File Storage (Armazenamento de Arquivos):**
+   - Refere-se à maneira como os dados são armazenados no Hadoop Distributed File System (HDFS), geralmente em formatos otimizados para consultas como texto, Avro, Parquet ou ORC.
+
+<img src="_images/603.png" width="50%"></img>
+
+<div style="float: left">
+    <img src="_images/605.webp" width="100px" alt="Imagem">
+</div>
+
+
+
+
+
+O Apache Pig é uma plataforma para análise e processamento de dados no ecossistema Hadoop. Ele fornece uma linguagem chamada Pig Latin, que é uma linguagem de script de alto nível projetada para facilitar a escrita de programas para processamento de dados em larga escala. Aqui estão alguns pontos-chave sobre o Apache Pig:
+
+1. **Linguagem Pig Latin:**
+   - Pig Latin é a linguagem de script utilizada no Apache Pig. Ela é projetada para ser simples e expressiva, permitindo que os usuários descrevam operações de transformação de dados em um estilo declarativo.
+2. **Modelo de Programação de Fluxo de Dados:**
+   - O Apache Pig segue um modelo de programação de fluxo de dados, onde as operações de transformação de dados são expressas como um fluxo de dados dirigido (DAG). Isso facilita a representação de operações complexas em termos de fluxo de dados.
+3. **Otimização Automática:**
+   - O Pig otimiza automaticamente as operações do usuário sempre que possível, permitindo que os usuários se concentrem na lógica da aplicação em vez de otimizações de execução.
+4. **Extensibilidade:**
+   - O Pig é extensível, permitindo que os usuários definam suas próprias funções em Java, Python, ou outras linguagens, para realizar operações personalizadas durante o processamento.
+5. **Compatibilidade com o Hadoop:**
+   - O Pig é executado sobre o Hadoop e aproveita as capacidades do Hadoop Distributed File System (HDFS) para armazenamento distribuído e processamento paralelo.
+6. **Facilidade de Aprendizado:**
+   - Pig é frequentemente considerado mais acessível para usuários que estão familiarizados com linguagens de script, como Python. Isso facilita a transição de usuários que não têm experiência em programação Java, que é comumente usada em muitas outras tecnologias Hadoop.
+
+```pig
+-- Carrega os dados do arquivo CSV
+data = LOAD 'usuarios.csv' USING PigStorage(',') AS (nome:chararray, idade:int, cidade:chararray);
+
+-- Filtra usuários com idade válida (idade maior que 0)
+usuarios_validos = FILTER data BY idade > 0;
+
+-- Agrupa os usuários por cidade
+usuarios_por_cidade = GROUP usuarios_validos BY cidade;
+
+-- Calcula a média de idade para cada cidade
+media_idade_por_cidade = FOREACH usuarios_por_cidade GENERATE group AS cidade, AVG(usuarios_validos.idade) AS media_idade;
+
+-- Armazena os resultados
+STORE media_idade_por_cidade INTO 'saida/';
+
+-- Exibe os resultados
+DUMP media_idade_por_cidade;
+```
+
+<img src="_images/605.png"></img>
+
+O **HCatalog** fornece um serviço de metadados que permite a criação, gerenciamento e compartilhamento de metadados sobre dados armazenados no Hadoop Distributed File System (HDFS).
+
+- **Integração com Hive e Pig:** O HCatalog é integrado com o Apache Hive e o Apache Pig, permitindo que essas ferramentas acessem e compartilhem as informações do esquema (metadados) sem a necessidade de redefinir ou duplicar essas informações.
+
+- **APIs para Linguagens de Programação:** O HCatalog fornece APIs para várias linguagens de programação, incluindo Java e Python, permitindo que os desenvolvedores acessem e interajam com os metadados do Hadoop.
+- **Facilita a Compartilhamento de Dados:** Ao centralizar os metadados, o HCatalog facilita o compartilhamento de dados entre diferentes aplicativos e projetos dentro do ecossistema Hadoop.
+
+<div style="float: left">
+    <img src="_images/606.png" width="100px" alt="Imagem">
+</div>
+
+
+
+O Apache Spark é um framework de processamento de dados em cluster que se integra ao ecossistema Hadoop. Destacam-se:
+
+- **Processamento em Memória:**
+  - Armazenamento de dados em memória para acesso rápido.
+- **APIs Amigáveis:**
+  - APIs em Scala, Java, Python e SQL para desenvolvimento acessível.
+- **Modelo de Programação Avançado:**
+  - Suporta operações avançadas para pipelines eficientes.
+- **Diversos Workloads:**
+  - Além de batch, oferece suporte a stream processing, machine learning e processamento de grafos.
+- **Spark Core e Módulos Adicionais:**
+  - Núcleo do Spark com módulos como Spark SQL, Spark Streaming, MLlib e GraphX.
+- **Integração com Hadoop:**
+  - Acessa dados do HDFS, pode ser executado em clusters Hadoop existentes.
+- **Tempo de Resposta Interativo:**
+  - Processamento em memória e DAG contribuem para tempos de resposta rápidos.
+- **Estruturas de Dados Abstratas:**
+  - Introduz RDDs e DataFrames para simplificar o processamento distribuído.
+- **Ecossistema Hadoop Unificado:**
+  - Integra-se facilmente com ferramentas Hadoop como Hive, HBase e Flume.
+
+<div style="float: left">
+    <img src="_images/608.png" width="100px" alt="Imagem">
+</div>
+
+
+
+
+
+O Apache Storm é um sistema de processamento de dados em tempo real, projetado para lidar com fluxos contínuos de dados e realizar processamento em tempo real em um ambiente distribuído.
+
+- **Topologias de Fluxo de Dados:** Define fluxos de dados por meio de topologias com spouts (fontes) e bolts (processadores).
+
+- **Escalabilidade e Tolerância a Falhas:** Altamente escalável e tolerante a falhas, permitindo processamento contínuo mesmo com falhas de componentes.
+
+- **Modelo de Programação Simples:** Desenvolvimento simples com spouts que emitem dados e bolts que os processam.
+
+- **Integração com Diversas Fontes e Destinos:** Pode se integrar a várias fontes e destinos, como bancos de dados, sistemas de mensagens e APIs externas.
+
+- **Garantia de Processamento:** Oferece garantias de processamento, como "exatamente uma vez" ou "pelo menos uma vez".
+
+- **Ecossistema:** Ecossistema inclui Trident (para operações de estado) e integração com ferramentas Hadoop como HBase e Kafka.
+
+- **Utilizado em Diversos Casos de Uso:** Aplicações em análise de sentimentos, monitoramento em tempo real, detecção de fraudes e IoT.
+
+# 7 - Projetando um ambiente de supercomputação com Hadoop
+
+  <img src="_images/701.png" width="50%"></img>
+
+1. **NameNode:** Gerencia informações sobre onde os dados estão no Hadoop Distributed File System (HDFS). Armazena metadados e é crucial para o HDFS.
+2. **DataNode:** Armazena efetivamente os dados no HDFS. Múltiplos DataNodes distribuem e mantêm os blocos de dados no cluster.
+3. **Resource Manager:** Gerencia os recursos do cluster. Aloca recursos para diferentes aplicações, garantindo uso eficiente do cluster.
+4. **Node Manager:** Roda em cada nó do cluster, monitorando recursos locais como CPU e memória. Responsável por executar e monitorar tarefas (containers) atribuídas pelo Resource Manager.
+
+<div style="display: flex; width: 100%;">
+    <img src="_images/702.png" alt="Imagem 1" style="width: 50%; height: auto; display: block;">
+    <img src="_images/703.png" alt="Imagem 2" style="width: 50%; height: auto; display: block;">
+</div>
