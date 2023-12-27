@@ -463,7 +463,7 @@ O Apache Storm é um sistema de processamento de dados em tempo real, projetado 
 
 - **Utilizado em Diversos Casos de Uso:** Aplicações em análise de sentimentos, monitoramento em tempo real, detecção de fraudes e IoT.
 
-# 7 - Projetando um ambiente de supercomputação com Hadoop
+## 7 - Projetando um ambiente de supercomputação com Hadoop
 
   <img src="_images/701.png" width="50%"></img>
 
@@ -476,3 +476,110 @@ O Apache Storm é um sistema de processamento de dados em tempo real, projetado 
     <img src="_images/702.png" alt="Imagem 1" style="width: 50%; height: auto; display: block;">
     <img src="_images/703.png" alt="Imagem 2" style="width: 50%; height: auto; display: block;">
 </div>
+## 8 - Entendendo o Sistema de Arquivos Hadoop Distributed Filesystem - HDFS
+
+### NFS (Network File System) 
+
+O NFS (Network File System) é um protocolo que permite que sistemas operacionais compartilhem arquivos e diretórios em uma rede. O NFS permite que computadores em uma rede acessem remotamente os arquivos e diretórios como se estivessem localmente armazenados em seus próprios sistemas.
+
+  <img src="_images/801.png" width="50%"></img>
+
+1. **Servidor NFS:** O servidor NFS é o sistema que possui os arquivos e diretórios que serão compartilhados. Ele disponibiliza esses recursos para outros sistemas na rede.
+2. **Cliente NFS:** O cliente NFS é o sistema que acessa os arquivos compartilhados. Ele monta os diretórios remotos do servidor NFS como se fossem parte de seu próprio sistema de arquivos.
+
+### GFS (Google File System)
+
+O GFS (Google File System) é um sistema de arquivos distribuído desenvolvido pelo Google para gerenciar grandes volumes de dados em seus centros de dados. Ele foi projetado para fornecer um armazenamento confiável e de alto desempenho, otimizado para a leitura e gravação eficientes de grandes arquivos, como aqueles usados em aplicações de pesquisa na web e processamento de dados em larga escala.
+
+1. **Distribuição de Dados:** O GFS divide grandes arquivos em blocos fixos (geralmente de 64 ou 128 megabytes) e distribui esses blocos entre vários servidores para permitir o paralelismo e a recuperação de falhas.
+2. **Replicação:** Cada bloco de dados é replicado em vários servidores para garantir a durabilidade e a disponibilidade dos dados, mesmo em caso de falha de hardware ou interrupção de serviços.
+3. **Mestre (Master) e Trabalhadores (Workers):** O GFS possui um servidor mestre que gerencia os metadados e coordena as operações no sistema. Os servidores trabalhadores armazenam os dados e respondem às solicitações de leitura e gravação dos clientes.
+
+<img src="_images/802.png" width="50%"></img>
+
+### Hadoop Distributed File System (HDFS)
+
+O HDFS, ou Hadoop Distributed File System, é um sistema de arquivos distribuído desenvolvido para lidar com o armazenamento e processamento eficientes de grandes conjuntos de dados em ambientes de computação distribuída. Projetado como parte integrante do ecossistema Hadoop, o HDFS divide arquivos em blocos de tamanho fixo, distribuindo-os em diversos nós de um cluster. Essa abordagem facilita a leitura e gravação paralelas, possibilitando o processamento eficiente de dados em larga escala. Com mecanismos de replicação para tolerância a falhas, balanceamento dinâmico de carga e integração com ferramentas Hadoop, o HDFS é essencial para operações de big data, suportando aplicações como análise de dados, processamento de logs e outras tarefas intensivas em armazenamento e processamento.
+
+1. **Blocos e Distribuição de Dados:** O HDFS divide grandes arquivos em blocos, geralmente de tamanho fixo (por exemplo, 128 MB ou 256 MB).
+2. **Servidores Namenode e Datanode:**
+   - O Namenode mantém os metadados, como informações sobre a localização dos blocos e a estrutura do arquivo.
+   - Os Datanodes armazenam os blocos de dados e respondem às solicitações de leitura e gravação.
+3. **Leitura e Gravação em Paralelo:**
+   - O HDFS permite a leitura e gravação eficientes de grandes conjuntos de dados em paralelo.
+   - Múltiplos nós podem acessar e processar diferentes partes do arquivo simultaneamente.
+
+<img src="_images/803.png" width="50%"></img>
+
+A arquitetura de Rack no HDFS (Hadoop Distributed File System) refere-se à organização física dos nós de dados em racks (estruturas de armazenamento) em um data center. Essa organização é fundamental para otimizar o desempenho e garantir a tolerância a falhas. 
+
+
+A arquitetura de Rack no HDFS (Hadoop Distributed File System) refere-se à organização física dos nós de dados em racks (estruturas de armazenamento) em um data center. Essa organização é fundamental para otimizar o desempenho e garantir a tolerância a falhas. A arquitetura de Rack no HDFS é projetada com base nos seguintes conceitos:
+
+1. **Nós e Racks:**
+   - Um cluster HDFS consiste em vários nós, e esses nós são agrupados em racks.
+   - Cada rack contém vários nós de dados.
+2. **Localidade de Dados:**
+   - O princípio chave é maximizar a localidade de dados, significando que o processamento de dados deve ocorrer o mais próximo possível dos dados armazenados.
+   - Isso reduz a latência de acesso aos dados, pois evita transferências desnecessárias pela rede.
+3. **Princípio de Colocação de Réplicas:**
+   - O HDFS segue o princípio de colocar a primeira réplica localmente no mesmo nó, a segunda em um rack diferente, e a terceira em outro rack distante.
+   - Isso garante que haja redundância e recuperação de falhas enquanto mantém a eficiência de localidade de dados.
+
+<img src="_images/804.svg" width="50%"></img>
+
+O HDFS fornece uma interface de linha de comando (CLI) que permite interagir com o sistema de arquivos distribuído. Aqui estão alguns comandos fundamentais do HDFS no CLI:
+
+1. **`hadoop fs -ls <caminho>`:**
+   - Lista o conteúdo de um diretório no HDFS.
+   - Exemplo: `hadoop fs -ls /user/nome_usuario`.
+2. **`hadoop fs -mkdir <caminho>`:**
+   - Cria um diretório no HDFS.
+   - Exemplo: `hadoop fs -mkdir /user/nome_usuario/diretorio_novo`.
+3. **`hadoop fs -put <origem> <destino>`:**
+   - Copia arquivos ou diretórios do sistema de arquivos local para o HDFS.
+   - Exemplo: `hadoop fs -put arquivo_local.txt /user/nome_usuario/diretorio_hdfs/`.
+4. **`hadoop fs -get <origem> <destino>`:**
+   - Copia arquivos ou diretórios do HDFS para o sistema de arquivos local.
+   - Exemplo: `hadoop fs -get /user/nome_usuario/diretorio_hdfs/arquivo_hdfs.txt .` (o ponto final representa o diretório atual).
+5. **`hadoop fs -cat <caminho>`:**
+   - Exibe o conteúdo de um arquivo no HDFS.
+   - Exemplo: `hadoop fs -cat /user/nome_usuario/arquivo_hdfs.txt`.
+6. **`hadoop fs -rm <caminho>`:**
+   - Remove um arquivo ou diretório do HDFS.
+   - Exemplo: `hadoop fs -rm /user/nome_usuario/arquivo_hdfs.txt`.
+7. **`hadoop fs -cp <origem> <destino>`:**
+   - Copia arquivos ou diretórios dentro do HDFS.
+   - Exemplo: `hadoop fs -cp /user/nome_usuario/arquivo_hdfs.txt /user/nome_usuario/diretorio_destino/`.
+8. **`hadoop fs -mv <origem> <destino>`:**
+   - Move arquivos ou diretórios dentro do HDFS.
+   - Exemplo: `hadoop fs -mv /user/nome_usuario/arquivo_hdfs.txt /user/nome_usuario/diretorio_destino/`.
+9. **`hadoop fs -chmod <permissões> <caminho>`:**
+   - Modifica as permissões de um arquivo ou diretório no HDFS.
+   - Exemplo: `hadoop fs -chmod 755 /user/nome_usuario/arquivo_hdfs.txt`.
+10. **`hadoop fs -chown <proprietário:grupo> <caminho>`:**
+    - Modifica o proprietário e o grupo de um arquivo ou diretório no HDFS.
+    - Exemplo: `hadoop fs -chown nome_novo:grupo_novo /user/nome_usuario/arquivo_hdfs.txt`.
+
+<img src="_images/803.png" width="50%"></img>
+
+1. **NameNode (Mestre):**
+   - O NameNode é o mestre do sistema de arquivos HDFS.
+   - Armazena metadados, como a estrutura do sistema de arquivos, informações sobre os blocos de dados e os locais dos DataNodes.
+   - Mantém um registro de todos os arquivos, diretórios e suas respectivas estruturas hierárquicas.
+   - Gerencia os namespaces e controla as operações de leitura e gravação, coordenando a comunicação com os DataNodes.
+2. **DataNodes (Nós de Dados):**
+   - Os DataNodes são responsáveis pelo armazenamento efetivo dos dados.
+   - Armazenam os blocos de dados e replicam esses blocos conforme instruído pelo NameNode.
+   - Periodicamente, enviam relatórios de status para o NameNode para informar sobre a saúde e disponibilidade.
+   - Executam operações de leitura e gravação conforme instruído pelo cliente ou pelo NameNode.
+3. **Secondary NameNode:**
+   - Apesar do nome, o Secondary NameNode não é um substituto para o NameNode principal.
+   - Ele realiza operações de backup regulares dos metadados do NameNode para evitar perda de dados em caso de falha do NameNode.
+   - Não assume automaticamente as funções do NameNode em caso de falha; sua principal responsabilidade é manutenção e backup.
+
+**Fluxo de Operação:**
+
+- Quando um cliente deseja ler ou gravar dados, ele se comunica com o NameNode para obter informações sobre a localização dos blocos de dados.
+- O NameNode responde com os locais dos blocos de dados nos DataNodes.
+- O cliente então interage diretamente com os DataNodes para acessar ou modificar os dados.
