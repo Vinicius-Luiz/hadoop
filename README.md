@@ -654,5 +654,52 @@ Suponha que queremos contar a frequência de palavras em um conjunto de document
 - Os **Node Managers** gerenciam recursos locais em cada nó do cluster.
 - Os **Application Masters** são específicos para cada aplicativo, coordenando e solicitando recursos para sua execução no cluster.
 
-## 10 - Linux, ambiente prático e conceitos básicos de banco de dados SQL e NoSQL
+## 10 - Linux, ambiente prático
 
+**Exemplo de uso**
+
+<img src="_images/1001.png" width="45%"></img>
+
+**Red Hat Enterprise Linux (RHEL) e CentOS:**
+
+- **Red Hat Enterprise Linux (RHEL):** É uma distribuição Linux empresarial paga, conhecida por sua estabilidade e suporte de longo prazo. RHEL é frequentemente utilizado em ambientes corporativos onde a confiabilidade é crucial. Oferece gerenciamento de pacotes via RPM (Red Hat Package Manager) e utiliza o sistema de inicialização systemd.
+- **CentOS:** É uma distribuição de código aberto construída a partir do código-fonte do RHEL. O CentOS tem como objetivo fornecer uma alternativa gratuita e de alta compatibilidade para usuários que desejam a estabilidade do RHEL sem os custos associados à subscrição do suporte.
+
+**SUSE Linux Enterprise Server (SLES) e openSUSE:**
+
+- **SUSE Linux Enterprise Server (SLES):** Uma distribuição Linux empresarial desenvolvida pela SUSE. Assim como o RHEL, é projetada para ambientes corporativos e oferece recursos avançados e suporte premium. Usa o sistema de inicialização YaST (Yet another Setup Tool) e também gerenciamento de pacotes via RPM.
+- **openSUSE:** É a versão de código aberto desenvolvida pela comunidade, mantendo uma estreita relação com o SLES. Oferece uma base sólida e um ciclo de desenvolvimento mais rápido. openSUSE usa o sistema de inicialização systemd e o gerenciamento de pacotes Zypper.
+
+**Rocky Linux:**
+
+- **Rocky Linux:** É uma distribuição Linux focada na continuidade do CentOS Linux, após a mudança estratégica da Red Hat. Foi criada para fornecer uma alternativa de código aberto compatível com o RHEL. O projeto Rocky Linux é apoiado por uma comunidade ativa e orientado para a estabilidade e desempenho.
+
+**Ambiente Big Data com Hadoop:**
+
+- **Compatibilidade com Hadoop:** Todas essas distribuições Linux são compatíveis com o Hadoop e outros componentes do ecossistema big data. As características específicas de cada distribuição, como gerenciamento de pacotes e configuração do sistema, podem impactar na facilidade de instalação e manutenção do Hadoop.
+- **Stabilidade e Suporte:** RHEL e SLES são frequentemente preferidos em ambientes empresariais que exigem alto nível de suporte e estabilidade. Empresas podem optar pelo CentOS e openSUSE se buscarem uma solução de código aberto com características semelhantes, mas sem a necessidade de suporte pago.
+- **Comunidade e Independência:** Projeto Rocky Linux surgiu para atender à demanda de uma distribuição de código aberto continuando o legado do CentOS. Pode ser uma escolha para quem valoriza independência e participação ativa na comunidade.
+
+### Levantando as Virtual Machines
+
+- **3 máquinas** Master Nodes
+
+- **2 máquinas** Slave Nodes
+
+**O curso recomenda que cada uma das máquinas operem a 2GB RAM*
+
+### Modos de instalação
+
+- **Modo Local (Standalone):** Útil para desenvolvimento e testes locais em uma única máquina sem um verdadeiro ambiente distribuído.
+
+- **Modo Pseudo-Distribuído:** Simula um ambiente distribuído em uma única máquina, permitindo testes de escalabilidade e paralelismo.
+
+- <p style = "color: green"><b>Modo Totalmente Distribuído:</b> A configuração de produção, onde o Hadoop é implantado em um cluster real de máquinas, proporcionando escalabilidade e desempenho para grandes volumes de dados.</p>
+
+### 10.1 Observações do ecossistema Hadoop
+
+- Hadoop processa dados em batch. Consequentemente, ele não deve ser usado para processar dados transacionais. Mas o Hadoop pode resolver muitos outros tipos de problemas relacionados a Big Data.
+
+- Quando um arquivo precisa ser alterado, o procedimento típico no Hadoop é criar uma nova versão do arquivo. Isso envolve a criação de uma cópia modificada do arquivo, e a versão anterior ainda está disponível. Esse processo não apenas mantém a consistência e a integridade dos dados, mas também permite rastrear as mudanças ao longo do tempo.
+
+- <p style="color: red"><b>Hadoop não é um ambiente adequado para fazer consultas SQL tradicionais. Quando se fala em Big Data (500TB; 1PB)</b></p>
