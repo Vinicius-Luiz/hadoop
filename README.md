@@ -583,3 +583,76 @@ O HDFS fornece uma interface de linha de comando (CLI) que permite interagir com
 - Quando um cliente deseja ler ou gravar dados, ele se comunica com o NameNode para obter informações sobre a localização dos blocos de dados.
 - O NameNode responde com os locais dos blocos de dados nos DataNodes.
 - O cliente então interage diretamente com os DataNodes para acessar ou modificar os dados.
+
+## 9 - Entendendo o MapReduce e o YARN
+
+O MapReduce é um modelo de programação e processamento de dados utilizado no framework Apache Hadoop. O MapReduce divide uma tarefa em duas etapas principais: a fase de mapeamento (Map) e a fase de redução (Reduce).
+
+1. **Map (Mapeamento):**
+   - **Input Split:** Os dados de entrada são divididos em partes chamadas "input splits". Cada split é processado por uma instância separada do Mapper.
+   - **Função de Mapeamento (Map Function):** O usuário define uma função de mapeamento que é aplicada a cada registro no input split. O resultado do mapeamento é uma lista de pares chave-valor intermediários.
+2. **Shuffle e Sort (Embaralhamento e Ordenação):**
+   - Os pares chave-valor intermediários produzidos pelos Mappers são agrupados por chave.
+   - Os pares agrupados são ordenados, e os resultados são particionados e distribuídos para os Reducers.
+3. **Reduce (Redução):**
+   - **Função de Redução (Reduce Function):** O usuário define uma função de redução que é aplicada a cada grupo de pares chave-valor com a mesma chave. O resultado é uma lista final de pares chave-valor.
+   - O número de Reducers pode ser especificado pelo usuário.
+4. **Output (Saída):**
+   - Os resultados finais são gravados no sistema de arquivos de saída.
+
+**Exemplo Simpificado de MapReduce:**
+
+Suponha que queremos contar a frequência de palavras em um conjunto de documentos:
+
+- **Map (Mapeamento):** Para cada palavra em um documento, emita um par chave-valor onde a chave é a palavra e o valor é 1.
+- **Shuffle e Sort (Embaralhamento e Ordenação):** Agrupe todas as ocorrências da mesma palavra e ordene.
+- **Reduce (Redução):** Para cada grupo de palavras, some os valores para obter a contagem total.
+
+<img src="_images/901.png" width="50%"></img>
+
+**Hadoop 1.0:**
+
+- **Arquitetura:** Baseada principalmente no MapReduce e HDFS com um único NameNode.
+- **Processamento:** Modelagem rígida centrada no MapReduce.
+- **Versatilidade:** Limitada em suportar diferentes tipos de aplicativos.
+- **Alta Disponibilidade:** Desafios de alta disponibilidade, especialmente para o NameNode.
+- **Gerenciamento de Recursos:** Centralizado e otimizado para o MapReduce.
+
+**Hadoop 2.0:**
+
+- **Arquitetura:** Introdução do YARN (Yet Another Resource Negotiator) para separar gerenciamento de recursos e execução de tarefas.
+- **Processamento:** Suporte a vários modelos de processamento, incluindo MapReduce, Spark, Hive, etc.
+- **Versatilidade:** Mais flexibilidade para executar diferentes tipos de aplicativos no mesmo cluster.
+- **Alta Disponibilidade:** Recursos de alta disponibilidade para o HDFS, permitindo configuração de clusters ativos/ativos.
+- **Gerenciamento de Recursos:** Descentralizado com ResourceManager e ApplicationMaster, melhorando a eficiência na utilização de recursos.
+
+**Resumo:** O Hadoop 1.0 é limitado em flexibilidade e versatilidade, com desafios em alta disponibilidade. O Hadoop 2.0, com a introdução do YARN, supera essas limitações, oferecendo suporte a uma variedade de aplicativos, melhor gerenciamento de recursos e maior eficiência, tornando-se uma escolha mais robusta para ambientes de big data.
+
+<img src="_images/902.png" width="75%"></img>
+
+**Resource Manager (Gerenciador de Recursos):**
+
+- **Função:** O Resource Manager é responsável pela alocação global de recursos em um cluster Hadoop. Ele gerencia e coordena os recursos disponíveis em todos os nós do cluster.
+- **Localização:** Normalmente, há um único Resource Manager em um cluster Hadoop.
+- **Atividades Principais:** Recebe solicitações de recursos de Application Masters, atribui contêineres nos nós e monitora a utilização geral do cluster.
+
+**Node Manager (Gerenciador de Nó):**
+
+- **Função:** O Node Manager é executado em cada nó do cluster e gerencia os recursos locais disponíveis no nó, como CPU e memória.
+- **Localização:** Cada nó no cluster tem seu próprio Node Manager.
+- **Atividades Principais:** Recebe instruções do Resource Manager para executar e monitorar contêineres, relata o status dos recursos locais e das tarefas em execução.
+
+**Application Master (Mestre de Aplicação):**
+
+- **Função:** O Application Master é uma instância específica para cada aplicativo em execução no cluster. Ele solicita recursos ao Resource Manager e coordena a execução de tarefas no cluster.
+- **Localização:** Cada aplicativo em execução tem seu próprio Application Master, que é iniciado em um contêiner no cluster.
+- **Atividades Principais:** Negocia recursos com o Resource Manager, solicita a execução de tarefas específicas nos Node Managers e monitora o progresso do aplicativo.
+
+**Resumo:**
+
+- O **Resource Manager** gerencia globalmente os recursos em todo o cluster.
+- Os **Node Managers** gerenciam recursos locais em cada nó do cluster.
+- Os **Application Masters** são específicos para cada aplicativo, coordenando e solicitando recursos para sua execução no cluster.
+
+## 10 - Linux, ambiente prático e conceitos básicos de banco de dados SQL e NoSQL
+
