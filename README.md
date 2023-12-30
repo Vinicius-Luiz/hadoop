@@ -682,9 +682,12 @@ Suponha que queremos contar a frequência de palavras em um conjunto de document
 
 ### Levantando as Virtual Machines
 
-- **3 máquinas** Master Nodes
+- **3 máquinas Master Nodes** (softwares de apoio do ecossistema Hadoop)
+  - Kafka, Hive, Flume, Pig, Zookeeper
 
-- **2 máquinas** Slave Nodes
+- **2 máquinas Slave Nodes** (processamento e armazenamento)
+  - HDFS
+
 
 **O curso recomenda que cada uma das máquinas operem a 2GB RAM*
 
@@ -703,3 +706,200 @@ Suponha que queremos contar a frequência de palavras em um conjunto de document
 - Quando um arquivo precisa ser alterado, o procedimento típico no Hadoop é criar uma nova versão do arquivo. Isso envolve a criação de uma cópia modificada do arquivo, e a versão anterior ainda está disponível. Esse processo não apenas mantém a consistência e a integridade dos dados, mas também permite rastrear as mudanças ao longo do tempo.
 
 - <p style="color: red"><b>Hadoop não é um ambiente adequado para fazer consultas SQL tradicionais. Quando se fala em Big Data (500TB; 1PB)</b></p>
+
+## 11 - Instalando Linux
+
+*Downloads:<br> https://download.rockylinux.org/pub/rocky/8/isos/x86_64/Rocky-8.9-x86_64-dvd1.torrent<br>**http://mirror.ci.ifes.edu.br/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-DVD-2009.torrent***
+
+**O curso realiza o passo a passo para instalar o CentOS*<br>
+
+Dado que foi instalado a maquina virtual através da ISO e configurado o sumário de instalação:
+
+```bash
+# Exibe informações sobre as interfaces de rede
+ip addr show
+
+# Obtém dinamicamente um endereço IP para a interface enp0s3 via DHCP
+dhclient enp0s3
+
+# Exibe novamente informações sobre as interfaces de rede após a atribuição do endereço IP
+ip addr show
+
+# Testa a conectividade de rede fazendo ping para o servidor DNS público do Google (8.8.8.8)
+ping 8.8.8.8
+
+# Instala os pacotes vim (editor de texto avançado) e net-tools (utilitários de rede) usando o gerenciador de pacotes yum
+yum install vim net-tools -y
+
+# Atualiza todos os pacotes do sistema para as versões mais recentes disponíveis
+yum update -y
+
+# Desliga a máquina
+init 0
+```
+
+## 12 - Pré-configuração das imagens
+
+O primeiro processo de montar um cluster de alto desempenho é criar um processo de resolução de nomes.
+
+```bash
+ipconfig
+
+> Gateway Padrão. . . . . . . . . . . . . . . : 192.168.1.254 
+```
+
+**Na configuração `nmtui`, setar as configurações de acordo com o curso.*<br>Após o fim da configuração, você consegue acessar via Putty a máquina *m1*
+
+<img src="_images/1201.png" width=50%></img>
+
+Realizar o script IaaS
+
+```bash
+# Infraestrutura de nosso cluster
+
+# Resolvendo nomes no arquivo /etc/hosts
+
+# Editando o arquivo /etc/hosts usando o editor Vim
+vim /etc/hosts
+
+# Mapeamento de IPs para nomes de host
+192.168.1.21    m1.local.br    m1
+192.168.1.22    m2.local.br    m2
+192.168.1.23    m3.local.br    m3
+192.168.1.24    s1.local.br    s1
+192.168.1.25    s2.local.br    s2
+
+# [A] para entrar no modo de inserção do Vim, permitindo a edição do conteúdo
+# [ESC] para sair do modo de inserção e voltar para o modo de comando do Vim
+# :wq para salvar as alterações e sair do editor Vim
+# Isso significa que, após realizar as edições necessárias, você pressionará [ESC], seguido por :wq e Enter para salvar e sair.
+
+
+# Desabilitando o SELINUX
+
+# Utilizando o comando sed para substituir a configuração do SELINUX no arquivo /etc/sysconfig/selinux
+sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/sysconfig/selinux && cat /etc/sysconfig/selinux
+
+# Utilizando o comando sed para substituir a configuração do SELINUX no arquivo /etc/selinux/config
+sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config && cat /etc/selinux/config
+
+# setenforce 0 desabilita temporariamente o SELinux no ambiente atual
+setenforce 0
+
+
+# Desabilitando serviços desnecessarios
+
+# systemctl list-unit-files
+
+
+systemctl disable abrt-ccpp.service
+systemctl disable oops.service
+systemctl disable abrt-vmcore.service
+systemctl disable abrt-xcore.service
+systemctl disable abrtd.service
+
+systemctl disable mdmonitor.service
+systemctl disable sysstat.service
+systemctl disable postfix.service
+systemctl disable accounts-daemon.service                     
+systemctl disable libstoragemgmt.service
+systemctl disable multipathd.service
+systemctl disable bluetooth.service
+systemctl disable avahi-daemon.service
+systemctl disable cups.service
+
+systemctl disable hypervkvpd.servic
+systemctl disable hypervvssd.service
+systemctl disable kdump.service
+systemctl disable ksm.service
+systemctl disable ksmtuned.service
+
+systemctl disable libvirtd.service
+systemctl disable microcode.service
+systemctl disable rtkit-daemon.service
+systemctl disable spice-vdagentd.service
+systemctl disable smartd.service
+systemctl disable sysstat.service
+systemctl disable vmtoolsd.service
+systemctl disable hypervkvpd.service
+systemctl disable systemd-readahead-drop.service
+systemctl disable systemd-readahead-replay.service
+systemctl disable ModemManager.service
+systemctl disable rhsmcertd.service
+systemctl disable rngd.service
+systemctl disable abrt-oops
+systemctl disable abrt-xorg
+
+
+# Firewall Disable
+
+
+# Firewall Disable
+# Exibe o status atual do serviço firewalld
+systemctl status firewalld
+# Interrompe (para) o serviço firewalld
+systemctl stop firewalld
+# Desabilita o serviço firewalld, impedindo que ele seja iniciado automaticamente na inicialização do sistema
+systemctl disable firewalld
+# Exibe novamente o status do serviço firewalld após desativá-lo
+systemctl status firewalld
+
+
+# Modo configuração alto-desempenho com tuned
+
+# Define o perfil de ajuste para 'throughput-performance' usando o comando tuned-adm
+tuned-adm profile throughput-performance
+
+# Exibe o perfil de ajuste ativo (provavelmente 'throughput-performance')
+tuned-adm profile
+
+# Ativando relógio externo com Chrony
+
+# Instala o pacote Chrony usando o gerenciador de pacotes Yum
+yum install chrony -y
+
+# Configura o fuso horário para 'America/Sao_Paulo'
+timedatectl set-timezone America/Sao_Paulo
+
+# Atualiza as configurações no arquivo /etc/chrony.conf para usar servidores NTP brasileiros
+sed -i 's/0.centos.pool.ntp.org/gps.ntp.br/g' /etc/chrony.conf
+sed -i 's/1.centos.pool.ntp.org/a.st1.ntp.br/g' /etc/chrony.conf
+sed -i 's/2.centos.pool.ntp.org/b.st1.ntp.br/g' /etc/chrony.conf
+sed -i 's/3.centos.pool.ntp.org/c.st1.ntp.br/g' /etc/chrony.conf
+
+# Inicia o serviço Chrony
+systemctl start chronyd
+
+# Exibe o status do serviço Chrony
+systemctl status chronyd
+
+# Habilita o serviço Chrony para iniciar automaticamente na inicialização do sistema
+systemctl enable chronyd
+
+
+
+# Restrição de uso
+
+# Configura mensagens de aviso nos arquivos /etc/issue e /etc/issue.net para informar usuários não autorizados
+echo "Acesso Restrito - Somente Usuários Autorizados" >/etc/issue
+echo "Suas ações podem ser auditadas a qualquer momento" >>/etc/issue
+echo "pela equipe de segurança corporativa." >>/etc/issue
+
+# Configura mensagens de aviso adicionais nos arquivos /etc/issue.net
+echo "Acesso Restrito - Somente Usuários Autorizados" >/etc/issue.net
+echo "Suas ações podem ser auditadas a qualquer momento" >>/etc/issue.net
+echo "pela equipe de segurança corporativa." >>/etc/issue.net
+
+# Cria um arquivo .hushlogin para suprimir mensagens de login desnecessárias
+touch .hushlogin
+
+# Atualiza todos os pacotes do sistema usando o gerenciador de pacotes Yum
+yum update -y
+
+# Instala pacotes adicionais (wget, net-tools, vim) usando o Yum
+yum install wget net-tools vim -y
+
+# Reinicia o sistema
+reboot
+```
+
