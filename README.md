@@ -1010,4 +1010,175 @@ systemctl start rpcbind ypbind
 systemctl enable rpcbind ypbind
 ```
 
-Em todas as máquinas clientes, aplicar o comando `id hadoop` para verificar se a máquina está conectada no nó
+Em todas as máquinas clientes, aplicar o comando `id hadoop` para verificar se a máquina está conectada no nós.
+
+## 14 - Configurando o Sistema PassswordLess com SSH HostBased
+
+O SSH (Secure Shell) Host-Based é uma abordagem para autenticação no SSH que usa a configuração do host para autenticar usuários. No entanto, devo observar que o uso do SSH Host-Based não é recomendado como uma prática segura. O método mais seguro é o uso de chave pública/privada, especialmente com autenticação baseada em chave.
+
+Para todos os nós, execute:
+
+```bash
+# Gerando um par de chaves RSA usando o ssh-keygen
+
+# O comando ssh-keygen é utilizado para criar um par de chaves RSA.
+# -t rsa: Especifica o tipo de chave a ser gerado, neste caso, RSA.
+# -P '': Define uma senha vazia para a chave privada.
+#   Uma senha vazia significa que a chave privada não será protegida por senha.
+
+# A execução deste comando resultará na criação de duas chaves no diretório padrão (~/.ssh/):
+# - A chave privada: id_rsa
+# - A chave pública: id_rsa.pub
+
+ssh <no> # se já estiver local, não precisa
+# Digite a senha
+ssh-keygen -t rsa -P ''
+exit
+```
+
+Para todos os nós, execute:
+
+```bash
+# Executando um comando remoto via SSH para criar um arquivo .hushlogin no host
+
+# Este comando é útil para suprimir a exibição de mensagens de boas-vindas ou informações de login
+ssh <no> touch .hushlogin
+```
+
+### Cliente SSH
+
+- `HostbasedAuthentication yes` habilita a autenticação host-based.
+- `EnableSSHKeysign yes` habilita o agente SSH para assinar as requisições de autenticação host-based.
+
+```bash
+# Configurando o arquivo ssh_config e distribuindo para hosts remotos usando scp
+
+# Adiciona ou modifica as opções HostbasedAuthentication e EnableSSHKeysign no arquivo.
+vim /etc/ssh/ssh_config
+      HostbasedAuthentication yes
+      EnableSSHKeysign        yes
+
+# Copia o arquivo ssh_config modificado para os hosts remotos 'm2', 'm3', 's1' e 's2' no diretório /etc/ssh/
+
+# Copia para o host 'm2'
+scp /etc/ssh/ssh_config m2:/etc/ssh
+
+# Copia para o host 'm3'
+scp /etc/ssh/ssh_config m3:/etc/ssh
+
+# Copia para o host 's1'
+scp /etc/ssh/ssh_config s1:/etc/ssh
+
+# Copia para o host 's2'
+scp /etc/ssh/ssh_config s2:/etc/ssh
+```
+
+### Server SSH
+
+- `HostbasedAuthentication yes` habilita a autenticação host-based para o servidor SSH.
+- `IgnoreRhosts no` permite que o servidor aceite arquivos `.rhosts` no diretório home dos usuários para autenticação.
+
+```Bash
+# Configurando o arquivo sshd_config e distribuindo para hosts remotos usando scp
+
+# Adiciona ou modifica as opções HostbasedAuthentication e IgnoreRhosts no arquivo.
+vim /etc/ssh/sshd_config
+      HostbasedAuthentication yes
+      IgnoreRhosts            no
+
+# Copia o arquivo sshd_config modificado para os hosts remotos 'm2', 'm3', 's1' e 's2' no diretório /etc/ssh/
+
+# Copia para o host 'm2'
+scp /etc/ssh/sshd_config m2:/etc/ssh
+
+# Copia para o host 'm3'
+scp /etc/ssh/sshd_config m3:/etc/ssh
+
+# Copia para o host 's1'
+scp /etc/ssh/sshd_config s1:/etc/ssh
+
+# Copia para o host 's2'
+scp /etc/ssh/sshd_config s2:/etc/ssh
+```
+
+```bash
+# Editando o arquivo shosts.equiv para configurar hosts equivalentes para autenticação host-based
+
+vim /etc/ssh/shosts.equiv
+# [A] modo inserção
+# [ESC] sair
+# [:wq] escrever e quit
+
+# Adiciona os nomes de host equivalentes para autenticação host-based.
+# Os hosts listados terão permissão para autenticar usando o método host-based.
+
+m1.local.br
+m2.local.br
+m3.local.br
+s1.local.br
+s2.local.br
+m1
+m2
+m3
+s1
+s2
+```
+
+```bash
+# Copia o arquivo shosts.equiv do diretório /etc/ssh/ para o diretório /root/
+cp /etc/ssh/shosts.equiv /root/.shosts
+# Ajusta as permissões do arquivo .shosts para garantir a privacidade e segurança.
+chmod 600 /root/.shosts
+
+ssh m2 cp /etc/ssh/shosts.equiv /root/.shosts
+ssh m2 chmod 600 /root/.shosts
+
+ssh m3 cp /etc/ssh/shosts.equiv /root/.shosts
+ssh m3 chmod 600 /root/.shosts
+
+ssh s1 cp /etc/ssh/shosts.equiv /root/.shosts
+ssh s1 chmod 600 /root/.shosts
+
+ssh s2 cp /etc/ssh/shosts.equiv /root/.shosts
+ssh s2 chmod 600 /root/.shosts
+```
+
+```bash
+# Utilizando ssh-keyscan para obter chaves de hosts equivalentes e armazená-las em ssh_known_hosts
+
+# O comando ssh-keyscan é usado para obter chaves públicas de hosts equivalentes
+# listados no arquivo shosts.equiv e redirecionar a saída para o arquivo ssh_known_hosts.
+
+# -t rsa: Especifica o tipo de chave a ser recuperado como RSA.
+# -f /etc/ssh/shosts.equiv: Indica o arquivo contendo os nomes de host equivalentes.
+# >/etc/ssh/ssh_known_hosts: Redireciona a saída do comando para o arquivo ssh_known_hosts.
+
+ssh-keyscan -t rsa -f /etc/ssh/shosts.equiv >/etc/ssh/ssh_known_hosts
+
+scp /etc/ssh/ssh_known_hosts m2:/etc/ssh
+scp /etc/ssh/ssh_known_hosts m3:/etc/ssh
+scp /etc/ssh/ssh_known_hosts s1:/etc/ssh
+scp /etc/ssh/ssh_known_hosts s2:/etc/ssh
+
+# Reiniciando o serviço SSH (sshd)
+ssh m1 service sshd restart
+ssh m2 service sshd restart
+ssh m3 service sshd restart
+ssh s1 service sshd restart
+ssh s2 service sshd restart
+```
+
+**A partir de agora, não é necessário de autenticação para acessar o servidor via SSH teste isso:**
+
+```bash
+vim /etc/servers
+# Insira essas 5 linhas no arquivo /etc/servers
+m1
+m2
+m3
+s1
+s2
+
+# Execute isso para ver a data de todos os hosts
+for i in `cat /etc/servers`; do ssh $i date; done
+```
