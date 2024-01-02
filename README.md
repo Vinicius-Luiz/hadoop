@@ -903,3 +903,111 @@ yum install wget net-tools vim -y
 reboot
 ```
 
+## 13 - Configurando autenticação com o Network Information Service - Serviço NIS
+
+O Network Information Service (NIS) é um serviço de diretório e autenticação utilizado em sistemas Linux e Unix. Seu principal objetivo é centralizar informações de rede, como senhas, grupos, hosts, e outros dados, permitindo que sistemas clientes acessem essas informações de forma centralizada.
+
+### Configuração para o servidor NIS
+
+**Configuração será realizada para a máquina M1*
+
+```bash
+# Instalando os pacotes servidores
+
+# Utilizando o gerenciador de pacotes Yum para instalar os pacotes ypserv e rpcbind
+
+# O pacote ypserv é parte do serviço NIS (Network Information Service)
+# - O ypserv atua como o servidor NIS, fornecendo acesso centralizado a essas informações.
+
+# O pacote rpcbind é responsável pelo mapeamento de serviços RPC (Remote Procedure Call)
+# - O RPC é um protocolo que permite que um programa em um computador solicite um serviço de um programa em outro computador.
+
+yum -y install ypserv rpcbind -y
+
+# Definindo o domínio NIS
+
+# Define o nome do domínio NIS para 'local.br'
+ypdomainname local.br
+
+# Adiciona a configuração do domínio NIS ao arquivo /etc/sysconfig/network
+echo "NISDOMAIN=local.br" >> /etc/sysconfig/network
+
+# Iniciando os serviços
+
+# Inicia os serviços rpcbind, ypserv, ypxfrd e yppasswdd utilizando o systemctl
+systemctl start rpcbind ypserv ypxfrd yppasswdd
+
+# Habilita os serviços rpcbind, ypserv, ypxfrd e yppasswdd para iniciar automaticamente na inicialização do sistema
+systemctl enable rpcbind ypserv ypxfrd yppasswdd
+
+# Configurando o servidor NIS
+
+# Executa o script ypinit no diretório /usr/lib64/yp para configurar o servidor NIS em modo mestre (-m)
+/usr/lib64/yp/ypinit -m
+# pressione [ctrl]+[D] para confirmar e depois [Y]
+
+# Executa o comando make para construir os mapas NIS
+# Toda vez que criar ou remover usuários refazer a base de dados do NIS
+cd /var/yp
+make
+```
+
+- Criando um usuário
+
+```bash
+# No servidor M1 criar um usuário hadoop
+adduser hadoop
+passwd hadoop
+
+# Toda vez que criar ou remover usuários refazer a base de dados do NIS
+cd /var/yp 
+make
+```
+
+
+
+### Configuração para o cliente NIS
+
+**Configuração será realizada para as máquinas M2, M2, S1 e S2*
+
+**Dado que a máquina M2 é uma cópia de M1, na configuração `nmtui`, setar as configurações de acordo com o curso (nome da máquina = M2; IP para 22.*<br>
+
+```bash
+# Instalando os pacotes clientes
+
+# Utilizando o gerenciador de pacotes Yum para instalar os pacotes ypbind e rpcbind
+yum -y install ypbind rpcbind
+
+# Definindo o domínio NIS para clientes
+
+# Define o nome do domínio NIS para 'local.br'
+ypdomainname local.br
+
+# Adiciona a configuração do domínio NIS ao arquivo /etc/sysconfig/network
+echo "NISDOMAIN=local.br" >> /etc/sysconfig/network
+
+# Configurando a autenticação
+
+# Utiliza o comando authconfig para configurar parâmetros relacionados à autenticação
+# enablenis: Habilita o suporte ao NIS para autenticação
+# nisdomain: Especifica o domínio NIS como 'local.br'
+# nisserver: Especifica o servidor NIS como 'm1.local.br'
+# enablemkhomedir: Habilita a criação automática de diretórios home para usuários que fazem login pela primeira vez
+# update: Atualiza as configurações de autenticação
+authconfig \
+--enablenis \               
+--nisdomain=local.br \      
+--nisserver=m1.local.br \   
+--enablemkhomedir \         
+--update    
+
+# Iniciando os serviços rpcbind e ypbind
+
+# Inicia os serviços rpcbind e ypbind utilizando o systemctl
+systemctl start rpcbind ypbind
+
+# Habilita os serviços rpcbind e ypbind para iniciar automaticamente na inicialização do sistema
+systemctl enable rpcbind ypbind
+```
+
+Em todas as máquinas clientes, aplicar o comando `id hadoop` para verificar se a máquina está conectada no nó
