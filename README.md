@@ -1301,3 +1301,107 @@ ssh s2.local.br systemctl enable gmond
 Acessando o PORTAL: *http://192.168.1.21/ganglia*
 
 <img src="_images/1501.png" width="70%"></img>
+
+## 16 - Implementando o Parallel Distributed Shell (PDSH)
+
+O Parallel Distributed Shell (PDSH) é uma ferramenta de linha de comando projetada para executar comandos em vários hosts em paralelo. Ele é particularmente útil em ambientes distribuídos, como clusters, onde há a necessidade de realizar tarefas em várias máquinas remotas simultaneamente.
+
+**Instalando**
+
+```bash
+# Baixando o arquivo pdsh-2.29.tar.bz2 do repositório de armazenamento do Google
+wget -c https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pdsh/pdsh-2.29.tar.bz2
+
+# Descompactando o arquivo usando bzip2 e tar
+bzip2 -dc pdsh-2.29.tar.bz2 | tar xvf -
+
+# Navegando para o diretório recém-criado pdsh-2.29
+cd pdsh-2.29
+
+# Configurando a compilação do PDSH, habilitando suporte SSH e desabilitando suporte RSH
+./configure --with-ssh --without-rsh
+
+# Compilando o PDSH
+make
+
+# Instalando o PDSH no sistema
+make install
+
+# Exibindo a versão do PDSH instalada
+pdsh -V
+
+# Editando o script pdsh.sh no diretório /etc/profile.d/
+vim /etc/profile.d/pdsh.sh
+
+# Adicionando a seguinte linha para configurar o tipo de comando remoto para ssh
+# export PDSH_RCMD_TYPE=ssh
+
+# Atualizando o ambiente atual para refletir as alterações feitas no script pdsh.sh
+source /etc/profile.d/pdsh.sh
+```
+
+**Testando**
+
+```bash
+# Executando o comando 'uname -r' de forma paralela nos hosts 'm3'
+pdsh -w m3 uname -r
+# Executando uma sequência de comandos de forma paralela nos hosts 's1'
+pdsh -w s1 'uname -r; hostname; date'
+```
+
+**Automatizando**
+
+```bash
+# Criando o diretório /etc/pdsh se ainda não existir
+mkdir /etc/pdsh
+
+# Navegando para o diretório /etc/pdsh
+cd /etc/pdsh
+
+# Editando o arquivo 'hosts' no diretório /etc/pdsh para listar os hosts 'm1', 'm2', 'm3', 's1' e 's2'
+vim hosts
+
+# Inserindo os seguintes hosts no arquivo 'hosts':
+# m1
+# m2
+# m3
+# s1
+# s2
+```
+
+```bash
+# Editando o script pdsh.sh no diretório /etc/profile.d/
+vim /etc/profile.d/pdsh.sh
+
+# Adicionando as seguintes linhas para configurar o arquivo de hosts para o PDSH
+# export WCOLL=/etc/pdsh/hosts
+
+# Atualizando o ambiente atual para refletir as alterações feitas no script pdsh.sh
+source /etc/profile.d/pdsh.sh
+```
+
+**Testasndo**
+
+Enquanto `pdsh date` executa o comando em todos os hosts disponíveis no ambiente PDSH, `pdsh -w ^hosts date` executa o comando apenas nos hosts listados no arquivo de hosts especificado. 
+
+```bash
+# Executando o comando 'date' de forma paralela em todos os hosts configurados no arquivo de hosts
+pdsh date
+
+# Executando o comando 'uptime' de forma paralela nos hosts listados no arquivo de hosts
+pdsh -w ^hosts uptime
+
+# Executando o comando 'uptime' de forma paralela nos hosts listados no arquivo de hosts
+# Ordenando a saída por host usando o comando 'sort'
+pdsh -w ^hosts uptime | sort
+
+# Executando o comando 'cat /proc/cpuinfo' de forma paralela em todos os hosts
+# Filtrando a saída usando 'egrep' para exibir informações específicas sobre a CPU
+pdsh 'cat /proc/cpuinfo' | egrep 'bogomips|model|cpu'
+
+# Executando uma sequência de comandos de forma paralela nos hosts m1, m2 e m3
+# A sequência de comandos inclui 'date', 'sleep 5', e 'date'
+pdsh -w m[1-3] "date; sleep 5; date"
+
+```
+
