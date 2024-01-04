@@ -1182,3 +1182,122 @@ s2
 # Execute isso para ver a data de todos os hosts
 for i in `cat /etc/servers`; do ssh $i date; done
 ```
+
+## 15 - Implementando Gerenciamento de Desempenho com Ganglia
+
+Ganglia é uma estrutura de software de código aberto projetada para o monitoramento e gerenciamento de clusters e sistemas distribuídos. O Gerenciamento de Desempenho com Ganglia refere-se à utilização do Ganglia para coletar, visualizar e analisar dados de desempenho em ambientes distribuídos.
+
+`gmetad` e `gmond` são componentes do sistema de monitoramento de clusters Ganglia. Eles desempenham papéis diferentes no ecossistema do Ganglia. Enquanto o `gmond` é responsável pela coleta e envio de dados de desempenho do nó para o `gmetad`, o `gmetad` atua como um servidor central que armazena e apresenta esses dados de forma agregada e visualmente compreensível.
+
+***Executar em M1 (Master Ganglia)**
+
+```bash
+# Baixando o pacote do Ganglia na versão 3.7.2 do SourceForge
+wget http://downloads.sourceforge.net/project/ganglia/ganglia%20monitoring%20core/3.7.2/ganglia-3.7.2.tar.gz
+
+# Instalando pacotes necessários para compilar o Ganglia
+yum install freetype-devel rpm-build php httpd libpng-devel libart_lgpl-devel python-devel pcre-devel autoconf automake libtool expat-devel rrdtool-devel apr-devel gcc-c++ make pkgconfig -y
+
+# Instalando o repositório EPEL (Extra Packages for Enterprise Linux)
+yum install epel-release -y
+
+# Atualizando todos os pacotes do sistema
+yum update -y
+
+# Instalando as bibliotecas libconfuse e libconfuse-devel necessárias para o Ganglia
+yum install libconfuse libconfuse-devel -y
+
+# Construindo o pacote RPM do Ganglia usando o arquivo tar.gz baixado
+rpmbuild -tb ganglia-3.7.2.tar.gz
+
+# Navegando até o diretório que contém os pacotes RPM construídos
+cd /root/rpmbuild/RPMS/x86_64/
+
+# Instalando todos os pacotes RPM disponíveis no diretório atual
+yum install *.rpm -y
+
+# Navegando novamente até o diretório de pacotes RPM
+cd /root/rpmbuild/RPMS/x86_64/
+
+# Removendo pacotes específicos que correspondem ao padrão 'ganglia-gmetad*.rpm'
+rm -rf ganglia-gmetad*.rpm
+
+# Copiando todos os pacotes RPM para os diretórios temporários nos hosts remotos usando SCP
+scp *.rpm root@m2.local.br:/tmp
+scp *.rpm root@m3.local.br:/tmp
+scp *.rpm root@s1.local.br:/tmp
+scp *.rpm root@s2.local.br:/tmp
+```
+
+***Em cada cliente**
+
+```bash
+# Cliente
+ssh root@m2.local.br
+
+yum install epel-release -y
+yum install libconfuse libconfuse-devel -y
+yum install /tmp/*.rpm -y
+```
+
+***Novamente no Master Ganglia**
+
+```bash
+cd /etc/ganglia
+vim gmetad.conf
+
+# encontrar a linha data_source e colocar essas informações
+data_source "Hadoop Cluster" m1.local.br
+
+# Habilitando o serviço gmetad para iniciar automaticamente durante a inicialização do sistema
+systemctl enable gmetad.service
+# Iniciando imediatamente o serviço gmetad
+systemctl start gmetad.service
+```
+
+Alterar o arquivo `/etc/ganglia/gmond.conf` pelo arquivo disponibilizado pelo curso
+
+```bash
+# Habilitando o serviço gmond para iniciar automaticamente durante a inicialização do sistema
+systemctl enable gmond.service
+# Iniciando imediatamente o serviço gmond
+systemctl start gmond.service
+# Verificando o status do serviço gmond para garantir que está em execução
+systemctl status gmond.service
+```
+
+**Instalando o portal no VINFRA**
+
+```Bash
+# script executado no master
+cd /tmp
+
+wget http://downloads.sourceforge.net/project/ganglia/ganglia%20monitoring%20core/3.1.1%20%28Wien%29/ganglia-web-3.1.1-1.noarch.rpm -O ganglia-web-3.1.1-1.noarch.rpm
+
+yum install -y ganglia-web-3.1.1-1.noarch.rpm
+
+yum install httpd -y
+
+systemctl enable httpd.service
+systemctl start httpd.service
+
+scp gmond.conf m1.local.br:/etc/ganglia/
+scp gmond.conf m2.local.br:/etc/ganglia/
+scp gmond.conf m3.local.br:/etc/ganglia/
+scp gmond.conf s1.local.br:/etc/ganglia/
+scp gmond.conf s2.local.br:/etc/ganglia/
+ssh m1.local.br service gmond start
+ssh m1.local.br systemctl enable gmond
+ssh m2.local.br systemctl enable gmond
+ssh m2.local.br systemctl start gmond
+ssh m3.local.br systemctl start gmond
+ssh m3.local.br systemctl enable gmond
+ssh s1.local.br systemctl enable gmond
+ssh s1.local.br systemctl start gmond
+ssh s2.local.br systemctl start gmond
+ssh s2.local.br systemctl enable gmond
+```
+
+Acessando o PORTAL: *http://192.168.1.21/ganglia*
+
+<img src="_images/1501.png" width="70%"></img>
