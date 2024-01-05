@@ -1380,7 +1380,7 @@ vim /etc/profile.d/pdsh.sh
 source /etc/profile.d/pdsh.sh
 ```
 
-**Testasndo**
+**Testando**
 
 Enquanto `pdsh date` executa o comando em todos os hosts disponíveis no ambiente PDSH, `pdsh -w ^hosts date` executa o comando apenas nos hosts listados no arquivo de hosts especificado. 
 
@@ -1405,3 +1405,98 @@ pdsh -w m[1-3] "date; sleep 5; date"
 
 ```
 
+## 17 - Instalando o Java em todos os Nós do Cluster
+
+***Executar em M1 (Master)**
+
+```bash
+# Navegando para o diretório /opt
+cd /opt
+
+# Baixando o arquivo JDK (Java Development Kit) versão 8u381 para Linux x64
+wget -c https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u381-linux-x64.tar.gz
+
+# Navegando novamente para o diretório /opt
+cd /opt
+
+# Copiando o arquivo JDK para os servidores remotos (m2, m3, s1, s2)
+scp jdk-8u381-linux-x64.tar.gz root@m2.local.br:/opt
+scp jdk-8u381-linux-x64.tar.gz root@m3.local.br:/opt
+scp jdk-8u381-linux-x64.tar.gz root@s1.local.br:/opt
+scp jdk-8u381-linux-x64.tar.gz root@s2.local.br:/opt
+
+# Descompactando o arquivo JDK
+tar zxvf jdk-8u381-linux-x64.tar.gz
+
+# Renomeando o diretório JDK descompactado para 'java'
+mv jdk1.8.0_381/ java
+
+# Removendo o arquivo compactado do JDK
+rm -rf jdk-8u381-linux-x64.tar.gz
+
+# Navegando para o diretório /opt/java/
+cd /opt/java/
+
+# Configurando as alternativas para o comando 'java'
+alternatives --install /usr/bin/java java /opt/java/bin/java 2
+# Selecionando a configuração desejada para o comando 'java'
+alternatives --config java
+# Configurando as alternativas para o comando 'jar'
+alternatives --install /usr/bin/jar jar /opt/java/bin/jar 2
+# Configurando as alternativas para o comando 'javac'
+alternatives --install /usr/bin/javac javac /opt/java/bin/javac 2
+
+# Definindo as alternativas padrão para 'jar' e 'javac'
+alternatives --set jar /opt/java/bin/jar
+alternatives --set javac /opt/java/bin/javac
+
+# Verificando a versão do Java instalada
+java -version
+
+# Editando o script java.sh no diretório /etc/profile.d/
+vim /etc/profile.d/java.sh
+
+# Adicionando as seguintes linhas para configurar as variáveis de ambiente relacionadas ao Java
+export JAVA_HOME=/opt/java
+export JRE_HOME=/opt/java/jre
+export PATH=$PATH:/opt/java/bin:/opt/java/jre/bin
+
+# Atualizando o ambiente atual para refletir as alterações feitas no script java.sh
+source /etc/profile.d/java.sh
+
+# Copiando o script java.sh para os servidores remotos (m2, m3, s1, s2)
+scp /etc/profile.d/java.sh root@m2.local.br:/etc/profile.d
+scp /etc/profile.d/java.sh root@m3.local.br:/etc/profile.d
+scp /etc/profile.d/java.sh root@s1.local.br:/etc/profile.d
+scp /etc/profile.d/java.sh root@s2.local.br:/etc/profile.d
+```
+
+***Em cada cliente**
+
+```bash
+ssh m2
+
+cd /opt
+
+tar zxvf jdk-8u291-linux-x64.tar.gz
+
+mv jdk1.8.0_291/ java
+
+rm -rf jdk-8u291-linux-x64.tar.gz
+
+
+cd /opt/java/
+
+alternatives --install /usr/bin/java java /opt/java/bin/java 2
+
+alternatives --config java
+
+alternatives --install /usr/bin/jar jar /opt/java/bin/jar 2
+alternatives --install /usr/bin/javac javac /opt/java/bin/javac 2
+alternatives --set jar /opt/java/bin/jar
+alternatives --set javac /opt/java/bin/javac
+
+java -version
+
+source /etc/profile.d/java.sh
+```
