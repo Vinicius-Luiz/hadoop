@@ -1566,6 +1566,27 @@ scp /etc/profile.d/maven.sh s2:/etc/profile.d/
 
 # Executando o comando 'mvn -version' em todos os servidores usando pdsh e filtrando por "Apache"
 pdsh mvn -version | grep "Apache"
-
 ```
 
+## 19 - Inserindo os discos nos Compute Nodes / Data Nodes
+
+Os Compute Nodes executam tarefas de processamento e cálculos, enquanto os Data Nodes armazenam e gerenciam os dados. Em sistemas distribuídos, essa separação de funções permite escalabilidade e eficiência no processamento e armazenamento de grandes volumes de dados.
+
+**Exemplo:**
+
+- Em um cluster Hadoop, os Compute Nodes podem ser responsáveis por executar tarefas de processamento MapReduce, enquanto os Data Nodes armazenam os blocos de dados distribuídos pelo sistema de arquivos distribuído HDFS.
+
+```bash
+# Comando pdsh para desligar simultaneamente os sistemas nos hosts s1 e s2
+
+# pdsh: Utilitário para execução paralela de comandos em hosts remotos
+# -w s[1-2]: Especifica os hosts de destino usando um padrão de expressão regular, abrangendo s1 e s2
+# 'init 0': Comando a ser executado nos hosts remotos, neste caso, o comando 'init 0' para desligar os sistemas
+pdsh -w s[1-2] 'init 0'
+```
+
+Adicionando o disco de 1TB nas duas máquinas Slave.
+
+<img src="_images/1901.png" width=75%></img>>
+
+Utilize o comando `fdisk -l`para validar o tamanho dos discos das máquinas.
