@@ -1478,11 +1478,11 @@ ssh m2
 
 cd /opt
 
-tar zxvf jdk-8u291-linux-x64.tar.gz
+tar zxvf jdk-8u381-linux-x64.tar.gz
 
-mv jdk1.8.0_291/ java
+mv jdk1.8.0_381/ java
 
-rm -rf jdk-8u291-linux-x64.tar.gz
+rm -rf jdk-8u381-linux-x64.tar.gz
 
 
 cd /opt/java/
@@ -1500,3 +1500,72 @@ java -version
 
 source /etc/profile.d/java.sh
 ```
+
+## 18 - Instalando Apache Maven
+
+O Apache Maven é uma ferramenta de automação de construção (build) e gerenciamento de projetos utilizada principalmente para projetos em Java, embora possa ser utilizado para projetos em outras linguagens. Ele fornece um conjunto abrangente de padrões para a construção, relatório e documentação de projetos.
+
+Principais características do Apache Maven:
+
+1. **Gerenciamento de Dependências:**
+   - O Maven gerencia automaticamente as dependências do projeto, facilitando a inclusão de bibliotecas externas. As dependências são definidas em um arquivo chamado `pom.xml` (Project Object Model).
+2. **Ciclo de Vida Padrão:**
+   - O Maven define um ciclo de vida padrão para a construção de projetos. Esse ciclo inclui fases como compilação, teste, empacotamento, distribuição, instalação e deploy. Cada fase executa uma ou mais metas específicas.
+3. **Convenção sobre Configuração:**
+   - O Maven segue o princípio de "convenção sobre configuração". Isso significa que muitas configurações padrão são assumidas, e os desenvolvedores só precisam especificar configurações quando estão fora do padrão.
+4. **Plugins:**
+   - O Maven utiliza plugins para estender suas funcionalidades. Existem plugins para diferentes tarefas, como compilação, execução de testes, empacotamento, deploy, entre outras. Os plugins são configurados no arquivo `pom.xml`.
+5. **Central de Repositórios:**
+   - O Maven possui uma Central de Repositórios (Maven Central Repository), que é um repositório online onde estão disponíveis diversas bibliotecas e plugins prontos para serem utilizados em projetos Maven.
+6. **Relatórios e Documentação:**
+   - O Maven gera automaticamente relatórios sobre o projeto, como relatórios de teste, cobertura de código, e outros. Também suporta a geração de documentação para projetos.
+7. **Multi-Módulo:**
+   - O Maven suporta projetos multi-módulo, onde um único projeto pode consistir em vários subprojetos. Isso é útil para organizar grandes projetos.
+
+Ao utilizar o Maven, os desenvolvedores se beneficiam de um processo de construção padronizado, consistente e fácil de manter, além de facilitar a colaboração entre equipes de desenvolvimento.
+
+```bash
+# Navegando para o diretório /opt
+cd /opt
+
+# Baixando o arquivo do Apache Maven versão 3.9.6
+wget -c http://ftp.unicamp.br/pub/apache/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
+
+# Descompactando o arquivo do Apache Maven
+tar zxvf apache-maven-3.9.6-bin.tar.gz
+
+# Renomeando o diretório descompactado para 'maven'
+mv apache-maven-3.9.6 maven
+
+# Removendo o arquivo compactado do Apache Maven
+rm -rf apache-maven-3.9.6-bin.tar.gz
+
+# Editando o script 'maven.sh' no diretório /etc/profile.d/
+vim /etc/profile.d/maven.sh
+
+# Adicionando a seguinte linha para atualizar o PATH
+export PATH=/opt/maven/bin:${PATH}
+
+# Atualizando o ambiente atual para refletir as alterações feitas no script 'maven.sh'
+source /etc/profile.d/maven.sh
+
+# Verificando a versão do Maven instalado
+mvn -version
+
+# Copiando o script 'maven.sh' para os servidores remotos (m2, m3, s1, s2)
+scp /etc/profile.d/maven.sh m2:/etc/profile.d/
+scp /etc/profile.d/maven.sh m3:/etc/profile.d/
+scp /etc/profile.d/maven.sh s1:/etc/profile.d/
+scp /etc/profile.d/maven.sh s2:/etc/profile.d/
+
+# Sincronizando o diretório '/opt/maven' com os servidores remotos (m2, m3, s1, s2) usando rsync
+/usr/bin/rsync -avz /opt/maven m2:/opt
+/usr/bin/rsync -avz /opt/maven m3:/opt
+/usr/bin/rsync -avz /opt/maven s1:/opt
+/usr/bin/rsync -avz /opt/maven s2:/opt
+
+# Executando o comando 'mvn -version' em todos os servidores usando pdsh e filtrando por "Apache"
+pdsh mvn -version | grep "Apache"
+
+```
+
