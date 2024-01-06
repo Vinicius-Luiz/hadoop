@@ -1590,3 +1590,484 @@ Adicionando o disco de 1TB nas duas máquinas Slave.
 <img src="_images/1901.png" width=75%></img>>
 
 Utilize o comando `fdisk -l`para validar o tamanho dos discos das máquinas.
+
+## 20 - Implementando o Cluster de Hadoop
+
+### Configurando o ambiente em todos os nodos
+
+```bash
+cd /opt
+
+wget -c https://archive.apache.org/dist/hadoop/core/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+
+scp hadoop-3.3.6.tar.gz m2:/opt
+scp hadoop-3.3.6.tar.gz m3:/opt
+scp hadoop-3.3.6.tar.gz s1:/opt
+scp hadoop-3.3.6.tar.gz s2:/opt
+
+# Fazer para todos os nós
+# ssh m2
+# cd /opt
+tar zxvf hadoop-3.3.6.tar.gz
+
+mv hadoop-3.3.6 hadoop
+rm -rf hadoop-3.3.6.tar.gz
+```
+
+```bash
+cd /etc/profile.d
+vim hadoop.sh
+
+export JAVA_HOME=/opt/java
+export PATH=$PATH:/opt/java/bin
+export CLASSPATH=.:$JAVA_HOME/jre/lib:$JAVA_HOME/lib:$JAVA_HOME/lib/tools.jar
+export HADOOP_HOME=/opt/hadoop
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=$HADOOP_HOME/lib/native"
+export HDFS_NAMENODE_USER="root"
+export HDFS_DATANODE_USER="root"
+export HDFS_SECONDARYNAMENODE_USER="root"
+export YARN_RESOURCEMANAGER_USER="root"
+export YARN_NODEMANAGER_USER="root"
+#export HADOOP_CLASSPATH=`hadoop classpath`
+#export LD_LIBRARY_PATH=$HADOOP_HOME/lib/native:$LD_LIBRARY_PATH
+
+scp hadoop.sh m2:/etc/profile.d/
+scp hadoop.sh m3:/etc/profile.d/
+scp hadoop.sh s1:/etc/profile.d/
+scp hadoop.sh s2:/etc/profile.d/
+
+pdsh source /etc/profile.d/hadoop.sh
+```
+
+### Configurando o hadoop Master (somente no master)
+
+```bash
+vim $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+
+export JAVA_HOME=/opt/java
+export HADOOP_CLASSPATH="${JAVA_HOME}/lib/tools.jar:$HADOOP_CLASSPATH"
+export HADOOP_HOME_WARN_SUPPRESS=1
+export HADOOP_ROOT_LOGGER="WARN,DRFA"
+
+source $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+```
+
+***Configurando o core-site**
+
+```bash
+vim /opt/hadoop/etc/hadoop/core-site.xml
+```
+
+```xml
+<configuration>
+<property>
+  <name>fs.default.name</name>
+  <value>hdfs://m1.local.br:9000</value>
+</property>
+<property>
+  <name>fs.trash.interval</name>
+  <value>1440</value>
+</property>
+</configuration>
+```
+
+***Definição do site-hdfs**
+
+```bas
+vim /opt/hadoop/etc/hadoop/hdfs-site.xml
+```
+
+```xml
+<configuration>
+    
+<property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:///opt/hadoop/data/nameNode</value>
+    <final>true</final>
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:///dados/dataNode</value>
+  </property>
+
+  <property>
+    <name>dfs.replication</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.http-address</name>
+    <value>m1.local.br:9870</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.secondary.http-address</name>
+    <value>m2.local.br:50090</value>
+    <description>
+         The secondary namenode http server address and port.
+         If the port is 0 then the server will start on a free port.
+    </description>
+</property>
+
+</configuration>
+```
+
+***Configuração do MapReduce**
+
+```bas
+vim /opt/hadoop/etc/hadoop/mapred-site.xml
+```
+
+```xml
+<configuration>
+    
+<property>
+  <name>mapreduce.framework.name</name>
+  <value>yarn</value>
+</property>
+
+<property>
+  <name>mapreduce.application.classpath</name>
+  <value>/opt/hadoop/share/hadoop/mapreduce/*:$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*</value>
+</property>
+
+<property>
+  <name>yarn.app.mapreduce.am.env</name>
+  <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+</property>
+
+<property>
+  <name>mapreduce.map.env</name>
+  <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+</property>
+
+<property>
+  <name>mapreduce.reduce.env</name>
+  <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+</property>
+
+<property>
+  <name>mapreduce.map.memory.mb</name>
+  <value>8192</value>
+</property>
+
+<property>
+  <name>mapreduce.reduce.memory.mb</name>
+  <value>8192</value>
+</property>
+
+<property>
+  <name>mapreduce.map.java.opts</name>
+  <value>-Xmx1638m</value>
+</property>
+
+<property>
+  <name>mapreduce.reduce.java.opts</name>
+  <value>-Xmx1638m</value>
+</property>
+
+<property>
+    <name>mapreduce.jobhistory.address</name>
+    <value>m1.local.br:10020</value>
+</property>
+
+<property>
+    <name>mapreduce.jobhistory.admin.address</name>
+    <value>m1.local.br:10033</value>
+</property>
+
+<property>
+    <name>mapreduce.jobhistory.webapp.address</name>
+    <value>m1.local.br:19888</value>
+</property>
+
+</configuration>
+```
+
+***Configuração do YARN**
+
+```bash
+vim /opt/hadoop/etc/hadoop/yarn-site.xml
+```
+
+```xml
+<configuration>
+
+<property>
+   <name>yarn.resourcemanager.hostname</name>
+   <value>m1.local.br</value>
+</property>
+
+<property>
+   <name>yarn.nodemanager.aux-services</name>
+   <value>mapreduce_shuffle</value>
+</property>
+
+<property>
+    <name>yarn.timeline-service.hostname</name>
+    <value>m1.local.br</value>
+</property>
+
+</configuration>
+```
+
+***Definindo as máquinas masters, slaves e workers**
+
+```bash
+vim /opt/hadoop/etc/hadoop/masters
+
+# Geralmmente só se coloca 1
+m1.local.br
+m2.local.br
+m3.local.br
+```
+
+```bash
+vim /opt/hadoop/etc/hadoop/slaves
+# Relacionados ao HDFS
+s1.local.br
+s2.local.br
+```
+
+```bash
+vim /opt/hadoop/etc/hadoop/workers
+# Relacionados ao YARN
+s1.local.br
+s2.local.br
+```
+
+***Copiando arquivos de configuração**
+
+<p style="color:orange">Ele usou <b>scp /opt/hadoop/etc/hadoop/* m2:/opt/hadoop/etc/hadoop/</b> [17:15]</p>
+
+```bash
+/usr/bin/rsync -avz /opt/hadoop m2:/opt
+/usr/bin/rsync -avz /opt/hadoop m3:/opt
+/usr/bin/rsync -avz /opt/hadoop s1:/opt
+/usr/bin/rsync -avz /opt/hadoop s2:/opt
+```
+
+***Criando a partição (S1 e S2)**
+
+```bash
+# Criando a particao
+
+fdisk -l
+
+fdisk /dev/sdb
+
+Digite: n
+Digite: p
+Digite: enter
+Digite: enter e enter de novo
+Digite: w
+
+mkdir /dados
+
+mkfs -t xfs -f /dev/sdb1
+
+# mount /dev/sdb1 /dados # Opcional?
+
+blkid /dev/sdb1
+# Obter o UUID (ex. 687fff71-5a61-4def-bef2-0616e2ee1825)
+
+vim /etc/fstab
+
+UUID=687fff71-5a61-4def-bef2-0616e2ee1825       /dados  xfs     defaults        0    0
+
+
+# Testando removendo e incluindo montagem novamente
+# umount /dados # Se o passo Opcional for realizado?
+mount /dados
+df -h
+```
+
+***Criando o HDFS**
+
+```bash
+# Em M1
+hdfs namenode -format
+
+start-dfs.sh
+# m1: 1563 NameNode
+# m1: 1908 Jps
+# m2: 1395 SecondaryNameNode
+# m2: 1429 Jps
+# m3: 1348 Jps
+# s1: 1481 DataNode
+# s1: 1547 Jps
+# s2: 1479 DataNode
+# s2: 1545 Jps
+
+hdfs dfsadmin -report
+# Configured Capacity: 2197947424768 (2.00 TB)
+# Present Capacity: 2197879635968 (2.00 TB)
+# DFS Remaining: 2197879627776 (2.00 TB)
+# DFS Used: 8192 (8 KB)
+# DFS Used%: 0.00%
+# Replicated Blocks:
+#         Under replicated blocks: 0
+#         Blocks with corrupt replicas: 0
+#         Missing blocks: 0
+#         Missing blocks (with replication factor 1): 0
+#         Low redundancy blocks with highest priority to recover: 0
+#         Pending deletion blocks: 0
+# Erasure Coded Block Groups:
+#         Low redundancy block groups: 0
+#         Block groups with corrupt internal blocks: 0
+#         Missing block groups: 0
+#         Low redundancy blocks with highest priority to recover: 0
+#         Pending deletion blocks: 0
+# 
+# -------------------------------------------------
+# Live datanodes (2):
+# 
+# Name: 192.168.1.24:9866 (s1.local.br)
+# Hostname: s1.local.br
+# Decommission Status : Normal
+# Configured Capacity: 1098973712384 (1023.50 GB)
+# DFS Used: 4096 (4 KB)
+# Non DFS Used: 33894400 (32.32 MB)
+# DFS Remaining: 1098939813888 (1023.47 GB)
+# DFS Used%: 0.00%
+# DFS Remaining%: 100.00%
+# Configured Cache Capacity: 0 (0 B)
+# Cache Used: 0 (0 B)
+# Cache Remaining: 0 (0 B)
+# Cache Used%: 100.00%
+# Cache Remaining%: 0.00%
+# Xceivers: 0
+# Last contact: Sat Jan 06 03:16:06 BRT 2024
+# Last Block Report: Sat Jan 06 03:13:39 BRT 2024
+# Num of Blocks: 0
+# 
+# 
+# Name: 192.168.1.25:9866 (s2.local.br)
+# Hostname: s2.local.br
+# Decommission Status : Normal
+# Configured Capacity: 1098973712384 (1023.50 GB)
+# DFS Used: 4096 (4 KB)
+# Non DFS Used: 33894400 (32.32 MB)
+# DFS Remaining: 1098939813888 (1023.47 GB)
+# DFS Used%: 0.00%
+# DFS Remaining%: 100.00%
+# Configured Cache Capacity: 0 (0 B)
+# Cache Used: 0 (0 B)
+# Cache Remaining: 0 (0 B)
+# Cache Used%: 100.00%
+# Cache Remaining%: 0.00%
+# Xceivers: 0
+# Last contact: Sat Jan 06 03:16:06 BRT 2024
+# Last Block Report: Sat Jan 06 03:13:39 BRT 2024
+# Num of Blocks: 0
+```
+
+*DFSH Health: http://192.168.1.21:9870*
+
+***Levantando o YARN**
+
+```bash
+start-yarn.sh
+
+yarn node -list
+```
+
+*YARN: http://192.168.1.21:8088/cluster/nodes*
+
+```bash
+# Testando, veja o dashboard do YARN
+[root@m1 profile.d]# yarn jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.3.jar pi 16 10000
+JAR does not exist or is not a normal file: /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar
+```
+
+```bash
+# Fazendo um contador de palavras
+hdfs dfs -mkdir -p /user/root/input
+
+cd /opt/hadoop/
+
+hdfs dfs -put LICENSE.txt /user/root/input/
+
+cd $HADOOP_HOME
+
+yarn jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar wordcount input output
+
+hdfs dfs -cat /user/root/output/part-r-00000
+```
+
+```bash
+# Outro contador de palavras
+cd /root
+
+wget http://archive.ics.uci.edu/ml/machine-learning-databases/00504/qsar_fish_toxicity.csv
+
+hdfs dfs -mkdir /datasets
+
+hdfs dfs -put qsar_fish_toxicity.csv /datasets
+
+hdfs dfs -ls /datasets
+
+yarn jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar wordcount "/datasets/qsar_fish_toxicity.csv" output
+# Checando a execução do Job:
+
+hdfs dfs -cat output/part-r-00000
+```
+
+<img src="_images/2001.png"></img>
+
+```bash
+vim /usr/local/bin/hadoop-start.sh
+
+#!/bin/bash
+clear
+echo "Levantando o HDFS"
+start-dfs.sh
+hdfs dfs -ls /
+echo
+echo "Levantando o Yarn"
+start-yarn.sh
+yarn node -list
+echo
+echo "Levantando o Job History"
+mr-jobhistory-daemon.sh start historyserver
+clear
+pdsh jps|sort
+sleep 10
+clear
+```
+
+```bash
+vim /usr/local/bin/hadoop-stop.sh
+
+#!/bin/bash
+clear
+echo "Derrubando o HDFS"
+stop-dfs.sh
+echo "derrubando o Yarn"
+stop-yarn.sh
+echo
+echo "Derrubando o Job History"
+mr-jobhistory-daemon.sh stop historyserver
+clear
+pdsh jps|sort
+sleep 10
+clear
+```
+
+```bash
+chmod +x /usr/local/bin/hadoop-stop.sh
+chmod +x /usr/local/bin/hadoop-start.sh
+
+hadoop-stop.sh
+hadoop-start.sh
+```
+
