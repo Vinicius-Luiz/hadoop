@@ -1596,20 +1596,28 @@ Utilize o comando `fdisk -l`para validar o tamanho dos discos das máquinas.
 ### Configurando o ambiente em todos os nodos
 
 ```bash
+# Navegar para o diretório /opt
 cd /opt
 
+# Baixar o arquivo Hadoop 3.3.6 do Apache Archive
 wget -c https://archive.apache.org/dist/hadoop/core/hadoop-3.3.6/hadoop-3.3.6.tar.gz
 
+# Copiar o arquivo para os outros nós (m2, m3, s1, s2) usando o comando scp
 scp hadoop-3.3.6.tar.gz m2:/opt
 scp hadoop-3.3.6.tar.gz m3:/opt
 scp hadoop-3.3.6.tar.gz s1:/opt
 scp hadoop-3.3.6.tar.gz s2:/opt
 
-# Fazer para todos os nós
+# Para todos os nós:
+# - Acessar o nó remotamente usando SSH (por exemplo, ssh m2)
+# - Navegar para o diretório /opt
+# - Descompactar o arquivo Hadoop
+# - Renomear a pasta resultante para 'hadoop'
+# - Remover o arquivo compactado
+# (Essas etapas podem ser realizadas manualmente em cada nó ou usando um script)
 # ssh m2
 # cd /opt
 tar zxvf hadoop-3.3.6.tar.gz
-
 mv hadoop-3.3.6 hadoop
 rm -rf hadoop-3.3.6.tar.gz
 ```
@@ -1618,6 +1626,7 @@ rm -rf hadoop-3.3.6.tar.gz
 cd /etc/profile.d
 vim hadoop.sh
 
+# Adicionar as configurações de ambiente para o Hadoop ao arquivo hadoop.sh
 export JAVA_HOME=/opt/java
 export PATH=$PATH:/opt/java/bin
 export CLASSPATH=.:$JAVA_HOME/jre/lib:$JAVA_HOME/lib:$JAVA_HOME/lib/tools.jar
@@ -1639,11 +1648,13 @@ export YARN_NODEMANAGER_USER="root"
 #export HADOOP_CLASSPATH=`hadoop classpath`
 #export LD_LIBRARY_PATH=$HADOOP_HOME/lib/native:$LD_LIBRARY_PATH
 
+# Copiar o arquivo hadoop.sh para os outros nós (m2, m3, s1, s2) usando o comando scp
 scp hadoop.sh m2:/etc/profile.d/
 scp hadoop.sh m3:/etc/profile.d/
 scp hadoop.sh s1:/etc/profile.d/
 scp hadoop.sh s2:/etc/profile.d/
 
+# Executar o comando source para aplicar as configurações de ambiente em todos os nós
 pdsh source /etc/profile.d/hadoop.sh
 ```
 
@@ -1652,11 +1663,13 @@ pdsh source /etc/profile.d/hadoop.sh
 ```bash
 vim $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 
+# Adicionar as configurações de ambiente ao arquivo hadoop-env.sh
 export JAVA_HOME=/opt/java
 export HADOOP_CLASSPATH="${JAVA_HOME}/lib/tools.jar:$HADOOP_CLASSPATH"
 export HADOOP_HOME_WARN_SUPPRESS=1
 export HADOOP_ROOT_LOGGER="WARN,DRFA"
 
+# Executar o comando source para aplicar as configurações de ambiente
 source $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 ```
 
@@ -1667,16 +1680,28 @@ vim /opt/hadoop/etc/hadoop/core-site.xml
 ```
 
 ```xml
+<!-- 
+  Configuração do Hadoop no arquivo core-site.xml.
+
+  fs.default.name:
+    - Define o endereço padrão do sistema de arquivos (File System) como hdfs://m1.local.br:9000.
+    - Indica o endereço do NameNode do HDFS.
+
+  fs.trash.interval:
+    - Define o intervalo (em minutos) após o qual os arquivos excluídos são removidos permanentemente.
+    - Neste caso, 1440 minutos (1 dia).
+-->
 <configuration>
-<property>
-  <name>fs.default.name</name>
-  <value>hdfs://m1.local.br:9000</value>
-</property>
-<property>
-  <name>fs.trash.interval</name>
-  <value>1440</value>
-</property>
+  <property>
+    <name>fs.default.name</name>
+    <value>hdfs://m1.local.br:9000</value>
+  </property>
+  <property>
+    <name>fs.trash.interval</name>
+    <value>1440</value>
+  </property>
 </configuration>
+
 ```
 
 ***Definição do site-hdfs**
@@ -1686,9 +1711,32 @@ vim /opt/hadoop/etc/hadoop/hdfs-site.xml
 ```
 
 ```xml
+<!--
+  Configuração do Hadoop no arquivo hdfs-site.xml.
+
+  dfs.namenode.name.dir:
+    - Define o diretório local onde o NameNode armazena seus metadados.
+    - No exemplo, o diretório é file:///opt/hadoop/data/nameNode.
+
+  dfs.datanode.data.dir:
+    - Define o diretório local onde os DataNodes armazenam seus dados.
+    - No exemplo, o diretório é file:///dados/dataNode.
+
+  dfs.replication:
+    - Define o fator de replicação padrão para os blocos de dados no HDFS.
+    - No exemplo, está configurado como 2, indicando que cada bloco é replicado em dois nós.
+
+  dfs.namenode.http-address:
+    - Define o endereço e a porta do servidor HTTP do NameNode.
+    - No exemplo, o endereço é m1.local.br e a porta é 9870.
+
+  dfs.namenode.secondary.http-address:
+    - Define o endereço e a porta do servidor HTTP do Secondary NameNode.
+    - No exemplo, o endereço é m2.local.br e a porta é 50090.
+    - A descrição fornece informações adicionais sobre o endereço e a porta do servidor HTTP do Secondary NameNode.
+-->
 <configuration>
-    
-<property>
+  <property>
     <name>dfs.namenode.name.dir</name>
     <value>file:///opt/hadoop/data/nameNode</value>
     <final>true</final>
@@ -1716,8 +1764,7 @@ vim /opt/hadoop/etc/hadoop/hdfs-site.xml
          The secondary namenode http server address and port.
          If the port is 0 then the server will start on a free port.
     </description>
-</property>
-
+  </property>
 </configuration>
 ```
 
@@ -1728,68 +1775,92 @@ vim /opt/hadoop/etc/hadoop/mapred-site.xml
 ```
 
 ```xml
+<!--
+  Configuração do Hadoop no arquivo mapred-site.xml.
+
+  mapreduce.framework.name:
+    - Define o framework de execução do MapReduce como yarn.
+
+  mapreduce.application.classpath:
+    - Define o classpath das aplicações MapReduce no YARN.
+
+  yarn.app.mapreduce.am.env:
+    - Define as variáveis de ambiente para o ApplicationMaster do MapReduce no YARN.
+
+  mapreduce.map.env e mapreduce.reduce.env:
+    - Definem as variáveis de ambiente para os processos de map e reduce.
+
+  mapreduce.map.memory.mb e mapreduce.reduce.memory.mb:
+    - Definem a quantidade de memória alocada para os processos de map e reduce, respectivamente.
+
+  mapreduce.map.java.opts e mapreduce.reduce.java.opts:
+    - Definem as opções de configuração da máquina virtual Java para os processos de map e reduce.
+
+  mapreduce.jobhistory.address, mapreduce.jobhistory.admin.address e mapreduce.jobhistory.webapp.address:
+    - Configuram os endereços e portas para o serviço de histórico de trabalhos MapReduce.
+
+  Nos exemplos, o endereço é m1.local.br.
+-->
 <configuration>
-    
-<property>
-  <name>mapreduce.framework.name</name>
-  <value>yarn</value>
-</property>
+  <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+  </property>
 
-<property>
-  <name>mapreduce.application.classpath</name>
-  <value>/opt/hadoop/share/hadoop/mapreduce/*:$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*</value>
-</property>
+  <property>
+    <name>mapreduce.application.classpath</name>
+    <value>/opt/hadoop/share/hadoop/mapreduce/*:$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*</value>
+  </property>
 
-<property>
-  <name>yarn.app.mapreduce.am.env</name>
-  <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
-</property>
+  <property>
+    <name>yarn.app.mapreduce.am.env</name>
+    <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+  </property>
 
-<property>
-  <name>mapreduce.map.env</name>
-  <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
-</property>
+  <property>
+    <name>mapreduce.map.env</name>
+    <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+  </property>
 
-<property>
-  <name>mapreduce.reduce.env</name>
-  <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
-</property>
+  <property>
+    <name>mapreduce.reduce.env</name>
+    <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+  </property>
 
-<property>
-  <name>mapreduce.map.memory.mb</name>
-  <value>8192</value>
-</property>
+  <property>
+    <name>mapreduce.map.memory.mb</name>
+    <value>8192</value>
+  </property>
 
-<property>
-  <name>mapreduce.reduce.memory.mb</name>
-  <value>8192</value>
-</property>
+  <property>
+    <name>mapreduce.reduce.memory.mb</name>
+    <value>8192</value>
+  </property>
 
-<property>
-  <name>mapreduce.map.java.opts</name>
-  <value>-Xmx1638m</value>
-</property>
+  <property>
+    <name>mapreduce.map.java.opts</name>
+    <value>-Xmx1638m</value>
+  </property>
 
-<property>
-  <name>mapreduce.reduce.java.opts</name>
-  <value>-Xmx1638m</value>
-</property>
+  <property>
+    <name>mapreduce.reduce.java.opts</name>
+    <value>-Xmx1638m</value>
+  </property>
 
-<property>
+  <property>
     <name>mapreduce.jobhistory.address</name>
     <value>m1.local.br:10020</value>
-</property>
+  </property>
 
-<property>
+  <property>
     <name>mapreduce.jobhistory.admin.address</name>
     <value>m1.local.br:10033</value>
-</property>
+  </property>
 
-<property>
+  <property>
     <name>mapreduce.jobhistory.webapp.address</name>
     <value>m1.local.br:19888</value>
-</property>
-
+  </property>
 </configuration>
 ```
 
@@ -1800,47 +1871,73 @@ vim /opt/hadoop/etc/hadoop/yarn-site.xml
 ```
 
 ```xml
+<!--
+  Configuração do YARN no arquivo yarn-site.xml.
+
+  yarn.resourcemanager.hostname:
+    - Define o nome do host do ResourceManager do YARN. Neste exemplo, é m1.local.br.
+
+  yarn.nodemanager.aux-services:
+    - Especifica os serviços auxiliares que serão executados nos NodeManagers. No caso,
+      está configurado para usar o serviço auxiliar de shuffle do MapReduce.
+
+  yarn.timeline-service.hostname:
+    - Define o nome do host para o serviço de histórico de linha do tempo do YARN. Neste exemplo,
+      é m1.local.br.
+-->
 <configuration>
+  <property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value>m1.local.br</value>
+  </property>
 
-<property>
-   <name>yarn.resourcemanager.hostname</name>
-   <value>m1.local.br</value>
-</property>
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
 
-<property>
-   <name>yarn.nodemanager.aux-services</name>
-   <value>mapreduce_shuffle</value>
-</property>
-
-<property>
+  <property>
     <name>yarn.timeline-service.hostname</name>
     <value>m1.local.br</value>
-</property>
-
+  </property>
 </configuration>
 ```
 
 ***Definindo as máquinas masters, slaves e workers**
 
 ```bash
+# Configuração do arquivo masters no diretório /opt/hadoop/etc/hadoop.
 vim /opt/hadoop/etc/hadoop/masters
 
-# Geralmmente só se coloca 1
+# Geralmente, apenas um nó é especificado como o mestre (NameNode) no arquivo masters.
+# Neste exemplo, três nós são listados, mas normalmente apenas um seria o NameNode principal.
+
+# Lista de nós especificados como mestres (NameNodes):
 m1.local.br
 m2.local.br
 m3.local.br
 ```
 
 ```bash
+# Configuração do arquivo slaves no diretório /opt/hadoop/etc/hadoop.
 vim /opt/hadoop/etc/hadoop/slaves
-# Relacionados ao HDFS
+
+# Lista de nós especificados como escravos (DataNodes) no cluster Hadoop.
+# Esses nós participarão do armazenamento e processamento de dados no HDFS.
+
+# Nós especificados como escravos (DataNodes):
 s1.local.br
 s2.local.br
 ```
 
 ```bash
+# Configuração do arquivo workers no diretório /opt/hadoop/etc/hadoop.
 vim /opt/hadoop/etc/hadoop/workers
-# Relacionados ao YARN
+
+# Lista de nós especificados como trabalhadores (NodeManagers) no cluster YARN.
+# Esses nós participarão da execução de tarefas e gerenciamento de recursos no YARN.
+
+# Nós especificados como trabalhadores (NodeManagers):
 s1.local.br
 s2.local.br
 ```
@@ -1850,6 +1947,8 @@ s2.local.br
 <p style="color:orange">Ele usou <b>scp /opt/hadoop/etc/hadoop/* m2:/opt/hadoop/etc/hadoop/</b> [17:15]</p>
 
 ```bash
+# Sincronizando o diretório /opt/hadoop para outros nós do cluster usando rsync.
+
 /usr/bin/rsync -avz /opt/hadoop m2:/opt
 /usr/bin/rsync -avz /opt/hadoop m3:/opt
 /usr/bin/rsync -avz /opt/hadoop s1:/opt
@@ -1859,34 +1958,42 @@ s2.local.br
 ***Criando a partição (S1 e S2)**
 
 ```bash
-# Criando a particao
+# Comentários explicativos para a criação de uma partição no Linux.
 
+# Listando as partições disponíveis no sistema.
 fdisk -l
 
+# Iniciando o utilitário fdisk para criar uma nova partição no dispositivo /dev/sdb.
 fdisk /dev/sdb
 
-Digite: n
-Digite: p
-Digite: enter
-Digite: enter e enter de novo
-Digite: w
+# Executando comandos no utilitário fdisk para criar uma nova partição.
+# - Digite 'n' para criar uma nova partição.
+# - Digite 'p' para selecionar uma partição primária.
+# - Pressione 'enter' para aceitar o número da partição padrão.
+# - Pressione 'enter' novamente para aceitar o setor inicial padrão.
+# - Pressione 'enter' novamente para aceitar o setor final padrão.
+# - Digite 'w' para gravar as alterações e sair.
 
+# Criando um diretório para montar a nova partição.
 mkdir /dados
 
+# Formatando a nova partição com o sistema de arquivos XFS.
 mkfs -t xfs -f /dev/sdb1
 
-# mount /dev/sdb1 /dados # Opcional?
+# Opcional: Montando a nova partição no diretório /dados.
+# mount /dev/sdb1 /dados
 
+# Exibindo o identificador único (UUID) da nova partição.
 blkid /dev/sdb1
-# Obter o UUID (ex. 687fff71-5a61-4def-bef2-0616e2ee1825)
+# Anote o UUID obtido, que será usado na configuração do /etc/fstab.
 
+# Editando o arquivo /etc/fstab para configurar a montagem automática da partição.
 vim /etc/fstab
+# Adicione a seguinte linha, substituindo o UUID conforme o valor obtido acima.
+# UUID=687fff71-5a61-4def-bef2-0616e2ee1825       /dados  xfs     defaults        0    0
 
-UUID=687fff71-5a61-4def-bef2-0616e2ee1825       /dados  xfs     defaults        0    0
-
-
-# Testando removendo e incluindo montagem novamente
-# umount /dados # Se o passo Opcional for realizado?
+# Testando a remoção e a inclusão da montagem novamente.
+# umount /dados  # Se o passo Opcional for realizado
 mount /dados
 df -h
 ```
@@ -1895,8 +2002,11 @@ df -h
 
 ```bash
 # Em M1
+
+# Formatação do HDFS (Hadoop Distributed File System).
 hdfs namenode -format
 
+# Inicialização dos serviços do Hadoop Distributed File System.
 start-dfs.sh
 # m1: 1563 NameNode
 # m1: 1908 Jps
@@ -1983,11 +2093,7 @@ yarn node -list
 
 *YARN: http://192.168.1.21:8088/cluster/nodes*
 
-```bash
-# Testando, veja o dashboard do YARN
-[root@m1 profile.d]# yarn jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.1.3.jar pi 16 10000
-JAR does not exist or is not a normal file: /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar
-```
+*Testando o YARN*
 
 ```bash
 # Fazendo um contador de palavras
@@ -2069,5 +2175,117 @@ chmod +x /usr/local/bin/hadoop-start.sh
 
 hadoop-stop.sh
 hadoop-start.sh
+```
+
+## 21 - Executando aplicações não nativas java com Hadoop Streaming
+
+**Wordcount com StreamHadoop**
+
+```bash
+cd /root
+mkdir mobydick
+cd /mobydick
+
+wget http://www.gutenberg.org/cache/epub/2701/pg2701.txt 
+mv pg2701.txt mobydick.txt
+```
+
+Em `vim mapper.py`
+
+```python
+#!/usr/bin/env python
+
+import sys
+
+for linha in sys.stdin:
+    linha = linha.strip()
+    chaves = linha.split()
+    for chave in chaves:
+        valor = 1
+        print( '%s\t%d' % (chave, valor) )
+```
+
+Em `vim reducer.py`
+
+```python
+#!/usr/bin/env python
+
+import sys
+
+last_key = None
+running_total = 0
+
+for input_line in sys.stdin:
+    input_line = input_line.strip()
+    this_key, value = input_line.split("\t", 1)
+    value = int(value)
+
+    if last_key == this_key:
+        running_total += value 
+    else:
+        if last_key:
+            print( "%s\t%d" % (last_key, running_total) )
+        running_total = value
+        last_key = this_key
+
+if last_key == this_key:
+    print( "%s\t%d" % (last_key, running_total) )
+```
+
+Habilitar execução com `chmod +s mapper.py reducer.py`
+
+```bash
+# Comando para processar dados usando um script Python de mapeamento e redução.
+
+# 1. cat mobydick.txt: Lê o conteúdo do arquivo "mobydick.txt" e imprime no stdout.
+# 2. ./mapper.py: Redireciona a saída do comando anterior para o script Python de mapeamento (mapper.py).
+# 3. | (pipe): Conecta a saída do mapper.py à entrada do próximo comando (sort).
+# 4. sort: Classifica as linhas de dados de entrada em ordem alfabética.
+# 5. | (pipe): Conecta a saída do sort à entrada do próximo comando (reducer.py).
+# 6. ./reducer.py: Redireciona a saída do comando anterior para o script Python de redução (reducer.py).
+
+cat mobydick.txt | ./mapper.py |sort | ./reducer.py
+```
+
+**Manipulando no HDFS**
+
+```bash
+hdfs dfs -put mobydick.txt /user/root
+hdfs dfs -ls /user/root
+```
+
+```bash
+# Utilizando Hadoop Streaming para executar um trabalho MapReduce
+
+# Caminho para o arquivo JAR do Hadoop Streaming
+hadoop_jar_path="/opt/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.3.6.jar"
+
+# Especificando o caminho do arquivo de entrada no HDFS
+input_path="mobydick.txt"
+
+# Especificando o caminho do diretório de saída no HDFS
+output_path="saida_word"
+
+# Especificando o script do mapeador (mapper.py)
+mapper_script="mapper.py"
+
+# Especificando o script do redutor (reducer.py)
+reducer_script="reducer.py"
+
+# Comando completo para executar o trabalho MapReduce usando Hadoop Streaming
+hadoop jar ${hadoop_jar_path} \
+  -input ${input_path} \
+  -output ${output_path} \
+  -mapper ${mapper_script} \
+  -reducer ${reducer_script} \
+  -file ${mapper_script} \
+  -file ${reducer_script}
+  
+# ou
+# hadoop jar /opt/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.3.6.jar -input mobydick.txt -output saida_word -mapper mapper.py -reducer reducer.py -file mapper.py -file reducer.py
+```
+
+```bash
+ hdfs dfs -cat saida_word/part-00000
 ```
 
