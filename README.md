@@ -2289,3 +2289,183 @@ hadoop jar ${hadoop_jar_path} \
  hdfs dfs -cat saida_word/part-00000
 ```
 
+## 22 - Conceitos avançados de Hadoop [Pt.1]
+
+### Topologia de Rede
+
+1. **Replicação de Dados dentro do Cluster:**
+   - Configurar a replicação adequada para garantir a tolerância a falhas.
+   - Ajustar o fator de replicação de dados para otimizar o equilíbrio entre disponibilidade e eficiência de armazenamento.
+2. **Rede Bem Projetada:**
+   - Planejar uma infraestrutura de rede robusta para evitar gargalos e aprimorar a comunicação entre os nós do cluster.
+   - Considerar largura de banda, latência e requisitos de comunicação entre os componentes do Hadoop.
+3. **Protocolo LACP (Link Aggregation Control Protocol):**
+   - Avaliar a viabilidade e implementar o LACP para agrupar links de rede e aumentar a largura de banda disponível.
+   - Garantir a compatibilidade do protocolo com os switches de rede e os nós do cluster Hadoop.
+4. **Balanceamento de Carga:**
+   - Implementar estratégias de balanceamento de carga para distribuir uniformemente o tráfego na rede.
+
+### Baixa Alocação de Recursos
+
+1. **Submeter a Maior Quantidade de Jobs:**
+   - Avaliar a capacidade do cluster para processar simultaneamente um grande número de jobs.
+   - Utilizar ferramentas de gerenciamento de recursos para otimizar a alocação dinâmica de recursos conforme a demanda.
+2. **Gerenciamento das Filas de Prioridades:**
+   - Implementar e configurar filas de prioridades no sistema de gerenciamento de recursos do Hadoop (por exemplo, YARN) para controlar a execução de jobs.
+   - Atribuir prioridades a diferentes filas com base na importância, tipo ou origem dos jobs.
+3. **Capacidade de Elasticidade:**
+   - Explorar soluções de escalabilidade automática para adicionar ou remover nós do cluster conforme necessário.
+   - Utilizar ferramentas e técnicas que permitam a adaptação dinâmica à carga de trabalho, evitando a sobrecarga e a subutilização dos recursos.
+4. **Monitoramento Contínuo:**
+   - Implementar sistemas de monitoramento contínuo para acompanhar a utilização de recursos e identificar gargalos.
+   - Configurar alertas para notificar administradores sobre possíveis problemas ou situações que requerem intervenção.
+
+### Gerenciamento de Configurações
+
+1. **Ferramentas de Gerenciamento de Configurações:**
+   - Implementar ferramentas dedicadas de gerenciamento de configurações, como o Apache ZooKeeper ou o Consul, para centralizar e coordenar a distribuição das configurações.
+   - Facilitar a atualização e a sincronização automática de configurações entre os nós.
+2. **Repositórios Centralizados:**
+   - Armazenar as configurações em repositórios centralizados para facilitar a replicação e a recuperação.
+   - Utilizar sistemas de controle de versão para acompanhar alterações nas configurações ao longo do tempo.
+3. **Segurança das Configurações:**
+   - Garantir a segurança das configurações, especialmente aquelas que envolvem credenciais sensíveis.
+   - Implementar práticas recomendadas de segurança, como criptografia e restrição de acesso, para proteger informações confidenciais nas configurações.
+4. **Sincronização Automática:**
+   - Estabelecer processos automatizados para a sincronização periódica das configurações, garantindo que todas as alterações sejam propagadas eficientemente.
+   - Monitorar e registrar atividades relacionadas ao gerenciamento de configurações para auditoria e resolução de problemas.
+5. **Backup e Recuperação:**
+   - Implementar procedimentos robustos de backup e recuperação para as configurações do Hadoop.
+   - Testar regularmente os processos de recuperação para garantir a prontidão em casos de falhas ou perda de configurações.
+
+### Métricas de Monitoramento
+
+1. **Monitoramento de Recursos:**
+   - Implementar ferramentas de monitoramento para acompanhar o uso de recursos, incluindo memória, CPU e dispositivos de entrada/saída (I/O).
+   - Utilizar soluções como Grafana, Prometheus ou Ambari para visualização e análise de métricas.
+2. **Monitoramento de Containers:**
+   - Capturar métricas específicas de containers Hadoop, como os gerenciados pelo YARN.
+   - Acompanhar o desempenho, a alocação de recursos e a eficiência dos containers durante a execução de tarefas MapReduce e Spark.
+3. **Integração com Ferramentas de Terceiros:**
+   - Integrar sistemas de monitoramento com ferramentas de terceiros, como sistemas de tickets ou dashboards corporativos.
+   - Facilitar a colaboração entre equipes e melhorar a visibilidade sobre o estado do cluster.
+4. **Monitoramento Distribuído:**
+   - Distribuir agentes de monitoramento em vários nós do cluster para evitar gargalos e fornecer uma visão abrangente da integridade do sistema.
+   - Implementar políticas de redundância para garantir a continuidade do monitoramento mesmo em casos de falhas.
+
+### Backup / Restore
+
+1. **Backup de Dados Distribuídos:**
+   - Desenvolver estratégias de backup para dados distribuídos em diferentes nós do cluster Hadoop.
+   - Utilizar ferramentas como DistCp para copiar dados entre clusters ou diretórios, garantindo consistência e integridade.
+2. **Metadados do Namenode:**
+   - Realizar backup regular dos metadados armazenados no Namenode, incluindo o namespace do HDFS e as informações de blocos.
+   - Implementar soluções como snapshots ou ferramentas específicas para facilitar o processo de backup do Namenode.
+
+### Alta Disponibilidade
+
+1. **Namenode como Ponto Único de Falha:**
+   - O Namenode é tradicionalmente considerado um ponto único de falha no Hadoop, pois armazena metadados críticos. Estratégias para alta disponibilidade incluem:
+     - **Configuração de Namenode em Modo HA (Alta Disponibilidade):** Utilizando múltiplos Namenodes ativos para garantir redundância.
+     - **Uso de Quórum de JournalNodes:** JournalNodes armazenam o Journal do Namenode, permitindo a recuperação de metadados mesmo em caso de falha em um dos Namenodes.
+2. **JournalNodes:**
+   - Uso de JournalNodes para armazenar o Journal do Namenode, possibilitando a recuperação de metadados em caso de falha.
+   - Garantir um número ímpar de JournalNodes para obter resiliência a falhas.
+3. **Quorum de JournalNodes:**
+   - Definição de um quórum (maioria) de JournalNodes necessários para aceitar gravações no Journal.
+   - Assegurar que a maioria dos JournalNodes esteja disponível para garantir a consistência dos metadados.
+4. **Secondary Namenode e Contingência:**
+   - Reconhecimento de que o Secondary Namenode não é projetado para operar como um mecanismo de contingência para o Namenode principal.
+   - Exploração de soluções adicionais, como replicação geográfica ou backups, para contingência em casos extremos.
+
+### **Autenticação Única**
+
+1. **Mecanismos de Autenticação Unificada:**
+   - **Implementação de SSO (Single Sign-On):** Utilização de mecanismos que permitam aos usuários acessarem várias aplicações e serviços com um único conjunto de credenciais de autenticação.
+   - **Integração com Diretórios de Identidade:** Conexão com diretórios de identidade centralizados para autenticação única.
+2. **Active Directory (AD):**
+   - **Integração com AD:** Configuração de integração com o Active Directory para autenticação centralizada.
+   - **Utilização de Kerberos:** Implementação do protocolo Kerberos para autenticação segura entre os diversos componentes do cluster Hadoop.
+3. **Network Information Service (NIS):**
+   - **Integração com NIS:** Possibilidade de integração com o Network Information Service para gerenciar informações de autenticação e autorização de forma centralizada.
+4. **Kerberos como Mecanismo Padrão:**
+   - **Configuração do Kerberos:** Estabelecimento do Kerberos como o mecanismo padrão para autenticação no ambiente Hadoop.
+   - **Garantia de Segurança:** O Kerberos oferece autenticação forte e segura, contribuindo para a proteção contra ameaças de segurança.
+
+### Tuning
+
+1. **Compreensão Profunda da Ferramenta:**
+   - **Análise Detalhada:** Realizar uma análise profunda das ferramentas e componentes do ecossistema Hadoop para entender seu funcionamento interno.
+   - **Identificação de Parâmetros Críticos:** Identificar os parâmetros críticos que impactam o desempenho e a eficiência do cluster.
+2. **Ajustes no Código:**
+   - **Revisão de Código:** Realizar revisões de código para identificar oportunidades de otimização.
+   - **Otimização de Algoritmos:** Buscar otimizar algoritmos e lógicas de processamento nos jobs do Hadoop.
+3. **Tuning no Nível do Sistema Operacional (SO):**
+   - **Configurações do Kernel:** Ajustar configurações do kernel do sistema operacional para melhorar a eficiência na execução de operações Hadoop.
+   - **Utilização de Recursos do SO:** Otimizar a alocação e utilização de recursos do sistema operacional pelo Hadoop.
+4. **Tuning no Nível do Hadoop:**
+   - **Configurações do Hadoop:** Ajustar parâmetros de configuração do Hadoop, como capacidade de mapas e reduces, tamanho de blocos, etc.
+   - **Afinamento de Recursos do YARN:** Otimizar a alocação de recursos pelo YARN para melhorar o balanceamento de carga.
+
+## 23.1 - Backup no Hadoop
+
+### Armazenamentos em formato binário
+
+O armazenamento de dados compactados em formato binário é uma prática comum em sistemas de big data, como o Hadoop, visando otimizar o uso do espaço de armazenamento e melhorar o desempenho na leitura e gravação de dados. Dois formatos populares para armazenamento de dados binários compactados no ecossistema Hadoop são Parquet e ORC.
+
+**Parquet:**
+
+- **Armazenamento Colunar:** O Parquet organiza os dados por coluna em vez de por linha, o que melhora significativamente a eficiência na leitura de conjuntos de dados que envolvem a leitura de apenas algumas colunas.
+- **Suporte a Esquemas Complexos:** O Parquet é capaz de lidar com esquemas complexos e tipos de dados aninhados, sendo útil para dados semi-estruturados e complexos.
+- **Algoritmos de Compressão:** Oferece suporte a diferentes algoritmos de compressão, permitindo que os usuários escolham a estratégia de compressão que melhor se adapte às suas necessidades.
+
+**ORC (Optimized Row Columnar):**
+
+- **Compactação e Compressão:** O ORC utiliza técnicas avançadas de compactação e compressão para reduzir o tamanho dos dados armazenados, economizando espaço em disco e melhorando a eficiência de leitura.
+- **Estatísticas Integradas:** O ORC mantém estatísticas sobre os dados, o que facilita a execução de otimizações, como a eliminação de leitura de blocos de dados que não são relevantes para uma consulta específica.
+- **Suporte a Tipos de Dados Complexos:** Assim como o Parquet, o ORC suporta tipos de dados complexos e esquemas flexíveis.
+
+### Soluções Proprietárias | Sistema tradicional de Analytics x IBM Spectrum Scale
+
+<img src="_images/2301.png"></img>
+
+| Características                 | Sistema Tradicional de Analytics              | IBM Spectrum Scale                                           |
+| ------------------------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| **Arquitetura**                 | Geralmente centralizada                       | Distribuída                                                  |
+| **Escala Horizontal**           | Desafiador, custos significativos             | Eficiente, permite adição de nós para escalabilidade         |
+| **Desempenho**                  | Pode ser limitado em grandes volumes de dados | Otimizado para desempenho, suporte a paralelismo             |
+| **Gerenciamento de Dados**      | Desafios com dados distribuídos               | Recursos avançados, como virtualização de arquivos e snapshots |
+| **Flexibilidade**               | Menos flexível para grandes volumes de dados  | Altamente flexível, escalável e adaptável                    |
+| **Escopo de Aplicação**         | Limitado em ambientes de big data             | Amplamente utilizado em análise de big data                  |
+| **Manutenção e Escalabilidade** | Pode ser complexa e cara                      | Simplificada com escalabilidade horizontal eficiente         |
+| **Suporte a Protocolos**        | Depende do sistema específico                 | Suporte a vários protocolos de acesso, incluindo NFS e SMB   |
+
+### Cópia dos Dados para um outro Cluster - distcp
+
+O `distcp` (distributed copy) é uma ferramenta do ecossistema Apache Hadoop projetada para copiar grandes volumes de dados de um cluster Hadoop para outro de maneira eficiente e distribuída. Essa ferramenta é frequentemente usada para realizar cópias entre clusters ou entre diferentes diretórios dentro de um mesmo cluster.
+
+O comando básico para usar o `distcp` é semelhante a este:
+
+```bash
+hadoop distcp hdfs://origem/dir hdfs://destino/
+```
+
+Isso copiará todos os dados do diretório de origem para o diretório de destino.
+
+<img src="_images/2302.jpg"></img>
+
+### 23.2 - Comandos Administrativos Importantes
+
+1. **`hdfs fsck /`:**
+   - O comando `hdfs fsck` é usado para verificar a integridade e consistência dos blocos de dados armazenados no HDFS.
+   - No exemplo dado (`hdfs fsck /`), o comando verifica o status do sistema de arquivos a partir da raiz (`/`) do HDFS.
+   - Ele fornece informações sobre a quantidade de blocos, replicação, integridade dos dados e outros detalhes do sistema de arquivos.
+   - A saída pode incluir informações sobre blocos corrompidos, blocos replicados, entre outros.
+2. **`hdfs balancer`:**
+   - O comando `hdfs balancer` é utilizado para equilibrar os blocos de dados entre os nós do cluster HDFS.
+   - O HDFS normalmente replica os blocos de dados em vários nós para garantir redundância e tolerância a falhas. No entanto, ao longo do tempo, devido à adição ou remoção de nós, a distribuição dos blocos pode ficar desigual.
+   - O `hdfs balancer` move blocos de dados entre os nós para equalizar a distribuição, melhorando a utilização do espaço e a eficiência do cluster.
+3. **`hdfs dfsadmin -report`:**
+   - O comando `hdfs dfsadmin -report` fornece um relatório detalhado sobre o estado do cluster HDFS.
+   - Ele oferece informações sobre a capacidade total, capacidade usada, quantidade de nós, quantidade de blocos, entre outras métricas do cluster.
+   - A saída inclui detalhes sobre cada nó, incluindo capacidade, utilização, número de blocos e informações relacionadas à saúde do nó.
