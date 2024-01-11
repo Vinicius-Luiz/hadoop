@@ -2469,3 +2469,217 @@ Isso copiará todos os dados do diretório de origem para o diretório de destin
    - O comando `hdfs dfsadmin -report` fornece um relatório detalhado sobre o estado do cluster HDFS.
    - Ele oferece informações sobre a capacidade total, capacidade usada, quantidade de nós, quantidade de blocos, entre outras métricas do cluster.
    - A saída inclui detalhes sobre cada nó, incluindo capacidade, utilização, número de blocos e informações relacionadas à saúde do nó.
+
+## 24 - Rodando Benchmarks no Hadoop
+
+No contexto do Hadoop, benchmarks referem-se a testes e métricas usados para avaliar o desempenho do sistema. Os benchmarks são ferramentas e procedimentos específicos projetados para medir o desempenho de clusters Hadoop em várias operações, como processamento de dados, armazenamento, recuperação de dados e comunicação entre os nós do cluster.
+
+Alguns benchmarks comuns no contexto do Hadoop incluem:
+
+- **Teste de Sorteio (TeraSort):** Classifica grandes conjuntos de dados para medir o desempenho de operações de ordenação.
+
+- **Teste WordCount:** Avalia o desempenho do Hadoop ao contar o número de palavras em grandes conjuntos de dados.
+
+- **Teste TestDFSIO:** Mede o desempenho de operações de entrada e saída no sistema de arquivos distribuído do Hadoop (HDFS).
+
+- **Benchmark de Processamento de Consultas (TPC-H):** Um conjunto de testes mais abrangente que simula consultas complexas em grandes conjuntos de dados.
+
+- **Benchmarks de streaming:** Avaliam o desempenho de operações de transmissão e processamento contínuo de dados em tempo real.
+
+```Bash
+# Esse comando executa testes integrados para verificar a integridade e desempenho do ambiente Hadoop.
+hadoop jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-3.3.6-tests.jar
+```
+
+1. **DFSCIOTest:**
+   - **Descrição:** Benchmark de I/O distribuído para libhdfs.
+   - **Propósito:** Avalia o desempenho da leitura e escrita distribuída no sistema de arquivos do Hadoop.
+2. **MRReliabilityTest:**
+   - **Descrição:** Programa projetado para testar a confiabilidade do framework MapReduce introduzindo falhas e falhas.
+   - **Propósito:** Avalia a tolerância a falhas e a confiabilidade do sistema MapReduce.
+3. **TestDFSIO:**
+   - **Descrição:** Benchmark de I/O distribuído.
+   - **Propósito:** Avalia o desempenho de leitura e gravação distribuída no sistema de arquivos.
+4. **fail:**
+   - **Descrição:** Um job que falha intencionalmente.
+   - **Propósito:** Valida o tratamento de jobs que falham e a comunicação de erros.
+5. **gsleep:**
+   - **Descrição:** Um job de pausa onde os mappers criam um buffer de 1 MB para cada registro.
+   - **Propósito:** Avalia características de desempenho relacionadas a jobs de pausa e manipulação de buffer.
+6. **loadgen:**
+   - **Descrição:** Gerador genérico de carga de map/reduce.
+   - **Propósito:** Gera uma carga sintética para avaliar o desempenho e escalabilidade do sistema MapReduce.
+7. **mapredtest:**
+   - **Descrição:** Um teste de verificação map/reduce.
+   - **Propósito:** Testa a funcionalidade básica e a correção do framework MapReduce.
+8. **mrbench:**
+   - **Descrição:** Um benchmark map/reduce que pode criar muitos jobs pequenos.
+   - **Propósito:** Avalia o desempenho do sistema MapReduce em cenários com um grande número de jobs pequenos.
+9. **nnbench:**
+   - **Descrição:** Um benchmark que estressa o namenode com MapReduce.
+   - **Propósito:** Avalia o desempenho do namenode sob carga de trabalho do MapReduce.
+10. **nnbenchWithoutMR:**
+    - **Descrição:** Um benchmark que estressa o namenode sem o uso de MapReduce.
+    - **Propósito:** Avalia o desempenho do namenode sob carga sem a participação do MapReduce.
+11. **sleep:**
+    - **Descrição:** Um job que pausa em cada tarefa de map e reduce.
+    - **Propósito:** Mede o impacto de tarefas de pausa no sistema MapReduce.
+12. **testbigmapoutput:**
+    - **Descrição:** Um programa map/reduce que opera em um arquivo muito grande não divisível e realiza map/reduce de identidade.
+    - **Propósito:** Testa o tratamento de arquivos grandes e não divisíveis no framework MapReduce.
+13. **testfilesystem:**
+    - **Descrição:** Um teste para leitura/escrita no FileSystem.
+    - **Propósito:** Avalia o desempenho e a correção das operações de leitura e escrita no sistema de arquivos.
+14. **testmapredsort:**
+    - **Descrição:** Um programa map/reduce que valida a ordenação do framework map-reduce.
+    - **Propósito:** Testa a funcionalidade de ordenação do framework MapReduce.
+15. **testsequencefile:**
+    - **Descrição:** Um teste para arquivos planos de pares de chave-valor binários.
+    - **Propósito:** Valida o tratamento de arquivos de sequência no sistema MapReduce.
+16. **testsequencefileinputformat:**
+    - **Descrição:** Um teste para o formato de entrada de arquivo de sequência.
+    - **Propósito:** Testa a funcionalidade do formato de entrada de arquivo de sequência em jobs MapReduce.
+17. **testtextinputformat:**
+    - **Descrição:** Um teste para o formato de entrada de texto.
+    - **Propósito:** Valida a funcionalidade do formato de entrada de texto em jobs MapReduce.
+18. **threadedmapbench:**
+    - **Descrição:** Um benchmark map/reduce que compara o desempenho de maps com múltiplos spills em relação a maps com 1 spill.
+    - **Propósito:** Compara o desempenho de tarefas de map com diferentes características de spills.
+19. **timelineperformance:**
+    - **Descrição:** Um job que lança mappers para testar o desempenho do serviço de linha do tempo.
+    - **Propósito:** Mede o desempenho do serviço de linha do tempo ao lançar mappers.
+
+***Entrada**
+
+```bash
+# Comando Hadoop para executar o teste de I/O distribuído (TestDFSIO)
+
+hadoop jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-3.3.6-tests.jar \
+    TestDFSIO \
+    -write \            # Parâmetro indicando que é uma operação de escrita
+    -nrFiles 2 \        # Número de arquivos para escrever
+    -fileSize 1GB \     # Tamanho de cada arquivo
+    -resFile /tmp/TestDFSIOwrite.txt  # Arquivo de resultados
+
+# ou 
+# hadoop jar /opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-3.3.6-tests.jar TestDFSIO -write -nrFiles 2 -fileSize 1GB -resFile /tmp/TestDFSIOwrite.txt
+```
+
+***Saída**
+
+```
+----- TestDFSIO ----- : write
+            Date & time: Wed Jan 10 00:21:17 BRT 2024
+        Number of files: 2
+ Total MBytes processed: 2048
+      Throughput mb/sec: 70,79
+ Average IO rate mb/sec: 70,82
+  IO rate std deviation: 1,55
+     Test exec time sec: 52,19
+```
+
+**Descrição da Saída:**
+
+- **Date & time:** Data e hora em que o teste foi realizado.
+- **Number of files:** Número total de arquivos utilizados no teste (2 arquivos).
+- **Total MBytes processed:** Quantidade total de megabytes processados durante o teste (2048 MB).
+- **Throughput mb/sec:** Taxa de transferência total em megabytes por segundo (70,79 MB/s).
+- **Average IO rate mb/sec:** Taxa média de operações de entrada/saída por segundo (70,82 MB/s).
+- **IO rate std deviation:** Desvio padrão da taxa de operações de entrada/saída por segundo (1,55).
+- **Test exec time sec:** Tempo total de execução do teste em segundos (52,19 segundos).
+
+## 25 - Aprendendo sobre o ZooKeeper
+
+### Problemas dos Sistemas Distribuídos
+
+- **A rede é confiável: **Considerar a rede como totalmente confiável é um equívoco. Falhas, atrasos e perda de pacotes podem ocorrer. Sistemas distribuídos precisam ser projetados para lidar com essas incertezas.
+
+- **A latência é zero: **Na prática, a latência nunca é zero. Mensurar e gerenciar a latência é crucial em sistemas distribuídos, considerando as variações causadas por diferentes condições de rede e carga de trabalho.
+
+- **Largura de Banda é infinita:** A largura de banda não é infinita. Restrições de largura de banda podem impactar o desempenho. O design deve levar em conta a eficiência na transferência de dados.
+
+- **A rede é segura:**  Considerar a rede como segura pode levar a vulnerabilidades. Sistemas distribuídos devem incluir práticas de segurança robustas para proteger dados e comunicação.
+
+- **A topologia nunca muda:** Topologias de rede podem mudar devido a falhas ou reconfigurações. Sistemas distribuídos devem ser capazes de se adaptar dinamicamente a essas mudanças.
+
+- **Existe um único administrador:** Sistemas distribuídos geralmente envolvem múltiplos administradores ou autoridades. Coordenar e gerenciar essas entidades é uma parte crítica do projeto.
+
+- **A rede é homogênea:** Redes podem incluir uma variedade de dispositivos, sistemas operacionais e tecnologias. A heterogeneidade deve ser considerada ao projetar sistemas distribuídos.
+
+- **Custo é zero:** Recursos, largura de banda e energia têm custos associados. Projetar sistemas eficientes leva em conta a otimização desses recursos, mas o custo nunca é zero.
+
+## Definição
+
+O Apache ZooKeeper é um serviço de coordenação distribuída que fornece serviços essenciais para garantir a sincronização, consistência e gerenciamento de configurações compartilhadas em um cluster.
+
+**Conjunto de Recursos**
+
+- **Controle de Bloqueio:** O ZooKeeper oferece recursos como bloqueios distribuídos, permitindo que os nós coordenem e controlem o acesso concorrente a recursos compartilhados.
+- **Gestão de Configuração:** É usado para armazenar e distribuir configurações de forma consistente em todos os nós do cluster.
+- **Sincronização:** Fornecer serviços de sincronização para coordenar eventos e sequências de ações em ambientes distribuídos.
+- **Detecção de Falhas:** Ajuda na detecção e notificação de falhas em tempo real, melhorando a tolerância a falhas.
+
+**Consistência e Atomicidade**
+
+- **Consistência:** O ZooKeeper garante consistência forte, o que significa que todos os clientes veem o mesmo estado de dados ao mesmo tempo.
+- **Atomicidade:** As operações no ZooKeeper são atômicas, ou seja, elas são executadas como uma única transação, garantindo que ou todas as operações são concluídas ou nenhuma delas é.
+
+**Uso em Sistemas Distribuídos**
+
+O ZooKeeper é frequentemente usado em sistemas distribuídos para implementar bloqueios, eleições de líder, gerenciamento de configuração e outros casos onde a coordenação é essencial.
+
+**Exemplo Simplificado**
+
+Suponha que você tenha um cluster de servidores e deseje garantir que apenas um servidor execute uma tarefa específica por vez. O ZooKeeper poderia ser usado para criar um bloqueio distribuído, permitindo que apenas um servidor obtenha o bloqueio e execute a tarefa, evitando assim conflitos.
+
+### Topologia
+
+<img src="_images\2501.jpg"></img>
+
+**Ensemble (“Grupo”)**
+
+O Ensemble, em termos de ZooKeeper, refere-se ao conjunto de servidores que compõem um cluster do ZooKeeper. Este conjunto de servidores trabalha de maneira colaborativa para oferecer serviços de coordenação distribuída. Cada servidor no Ensemble desempenha um papel crucial. Um número ímpar de servidores (geralmente três, cinco ou sete) é recomendado para garantir a tolerância a falhas
+
+**Estado de Memória**
+
+O ZooKeeper mantém um estado de memória consistente entre os servidores do Ensemble para garantir que todos os servidores tenham a mesma visão dos dados. Isso significa que qualquer alteração feita em um servidor do ZooKeeper será replicada e refletida em todos os servidores do Ensemble.
+
+**Controle das Sessões**
+
+O ZooKeeper controla as sessões dos clientes conectados ao serviço. Cada cliente que se conecta ao ZooKeeper tem uma sessão associada, que é mantida ativa enquanto o cliente está ativo. Se um cliente perder a conexão ou não enviar comandos por um período específico, a sessão é encerrada.
+
+**Point-in-Time (Snapshots dos Estados Associados aos Serviços em Armazenamento Local)**
+
+O ZooKeeper tem a capacidade de criar snapshots do estado atual do serviço em um determinado ponto no tempo. Esses snapshots são úteis para recuperação de desastres e manutenção do sistema. Eles capturam o estado do ZooKeeper em um determinado momento, permitindo a restauração do sistema para esse estado se necessário.
+
+### Explorando conceitos
+
+**Barrier**
+
+Barreiras são usadas para coordenar o início ou término de um conjunto de operações simultâneas entre vários nós em um sistema distribuído. Uma barreira é semelhante a um ponto de sincronização, onde os nós aguardam até que todos tenham alcançado esse ponto antes de prosseguir.
+
+**Queue**
+
+ZooKeeper pode ser utilizado para implementar filas distribuídas. As operações atômicas oferecidas pelo ZooKeeper são valiosas para garantir a ordem correta de operações em uma fila, permitindo uma comunicação eficiente entre diferentes partes do sistema.
+
+**Lock**
+
+O ZooKeeper é frequentemente usado para implementar locks distribuídos. Isso ajuda a coordenar o acesso concorrente a recursos compartilhados entre nós em um sistema distribuído. O conceito de lock é fundamental para evitar condições de corrida.
+
+**Leader Election**
+
+A eleição de líder é um processo em que os nós competem para se tornar o líder de um grupo. O líder é responsável por coordenar atividades e garantir a consistência. ZooKeeper é amplamente utilizado para implementar algoritmos de eleição de líder em sistemas distribuídos.
+
+**Group Membership**
+
+O protocolo de associação ao grupo em um sistema distribuído visa alcançar um consenso entre os processos sobre quais outros processos estão ativos e operacionais no sistema em um determinado momento. O objetivo é permitir que os processos saibam quando um novo processo entra no sistema ou quando um processo existente sai, facilitando a consciência coletiva do estado do sistema em todo o cluster
+
+**Two-Phase Commit**
+
+O ZooKeeper pode ser empregado para implementar o protocolo de commit em duas fases (2PC). Isso é útil em cenários em que é necessário garantir a consistência em transações distribuídas.
+
+<img src="_images\2502.png" width = "70%"></img>
+
+**Service Discovery**
+
+O ZooKeeper é frequentemente usado para implementar serviços de descoberta. Ele fornece um local centralizado para registrar e descobrir serviços em um ambiente distribuído. Isso é vital para sistemas que precisam se adaptar dinamicamente às mudanças na topologia do cluster. O objetivo da descoberta de serviços é ajudar os clientes a determinar o endereço IP e a porta de um serviço específico que pode existir em vários hosts.
