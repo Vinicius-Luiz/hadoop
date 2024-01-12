@@ -2683,3 +2683,161 @@ O ZooKeeper pode ser empregado para implementar o protocolo de commit em duas fa
 **Service Discovery**
 
 O ZooKeeper é frequentemente usado para implementar serviços de descoberta. Ele fornece um local centralizado para registrar e descobrir serviços em um ambiente distribuído. Isso é vital para sistemas que precisam se adaptar dinamicamente às mudanças na topologia do cluster. O objetivo da descoberta de serviços é ajudar os clientes a determinar o endereço IP e a porta de um serviço específico que pode existir em vários hosts.
+
+## 26 - Instalando ZooKeeper
+
+```bash
+cd /opt
+
+wget https://archive.apache.org/dist/zookeeper/zookeeper-3.6.1/apache-zookeeper-3.6.1-bin.tar.gz
+
+scp /opt/apache-zookeeper-3.6.1-bin.tar.gz m2.local.br:/opt
+scp /opt/apache-zookeeper-3.6.1-bin.tar.gz m3.local.br:/opt
+
+
+tar zxvf apache-zookeeper-3.6.1-bin.tar.gz
+ssh m2 tar zxvf /opt/apache-zookeeper-3.6.1-bin.tar.gz
+ssh m3 tar zxvf /opt/apache-zookeeper-3.6.1-bin.tar.gz
+
+mv apache-zookeeper-3.6.1-bin zookeeper
+ssh m2 mv /opt/apache-zookeeper-3.6.1-bin /opt/zookeeper
+ssh m3 mv /opt/apache-zookeeper-3.6.1-bin /opt/zookeeper
+
+ssh m1 mkdir -p /opt/zoo/data
+ssh m2 mkdir -p /opt/zoo/data
+ssh m3 mkdir -p /opt/zoo/data
+
+# Somente em M1
+cd /opt/zookeeper/conf
+cp zoo_sample.cfg zoo.cfg
+vim zoo.cfg
+
+scp zoo.cfg m2:/opt/zookeeper/conf/
+scp zoo.cfg m3:/opt/zookeeper/conf/
+
+# tickTime=2000
+# initLimit=5
+# syncLimit=2	
+# dataDir=/opt/zoo/data
+# clientPort=2181
+# server.1=m1.local.br:2888:3888
+# server.2=m2.local.br:2888:3888
+# server.3=m3.local.br:2888:3888
+# 4lw.commands.whitelist=*
+```
+
+```bash
+# no m1
+ssh m1
+echo "1" > /opt/zoo/data/myid
+cat /opt/zoo/data/myid 
+exit
+
+# no m2
+
+ssh m2
+echo "2" > /opt/zoo/data/myid
+cat /opt/zoo/data/myid 
+exit
+
+# no m3
+
+ssh m3
+echo "3" > /opt/zoo/data/myid
+cat /opt/zoo/data/myid 
+exit
+```
+
+**Criando um systemd**
+
+```Bash
+# Criação do arquivo de serviço do ZooKeeper para systemd
+vim /etc/systemd/system/zookeeper.service
+
+[Unit]
+# Descrição do serviço
+Description=Zookeeper Daemon
+# Documentação relacionada ao serviço
+Documentation=http://zookeeper.apache.org
+# Requer a conclusão do network.target antes de iniciar
+Requires=network.target
+# Indica que deve ser iniciado após o network.target
+After=network.target
+
+[Service]
+# Tipo de serviço: forking indica que o processo será bifurcado em segundo plano
+Type=forking
+# Diretório de trabalho para o serviço
+WorkingDirectory=/opt/zookeeper
+# Usuário e grupo para executar o serviço
+User=root
+Group=root
+# Comando para iniciar o serviço ZooKeeper
+ExecStart=/opt/zookeeper/bin/zkServer.sh start /opt/zookeeper/conf/zoo.cfg
+# Comando para parar o serviço ZooKeeper
+ExecStop=/opt/zookeeper/bin/zkServer.sh stop /opt/zookeeper/conf/zoo.cfg
+# Comando para recarregar a configuração do serviço ZooKeeper
+ExecReload=/opt/zookeeper/bin/zkServer.sh restart /opt/zookeeper/conf/zoo.cfg
+# Tempo limite para iniciar o serviço antes de considerá-lo como falha
+TimeoutSec=30
+# Política de reinicialização em caso de falha
+Restart=on-failure
+
+[Install]
+# Alvo desejado quando o serviço é ativado
+WantedBy=default.target
+```
+
+```bash
+scp /etc/systemd/system/zookeeper.service m2:/etc/systemd/system/
+scp /etc/systemd/system/zookeeper.service m3:/etc/systemd/system/
+```
+
+**Em cada NODO**
+
+```bash
+# No M1
+
+systemctl daemon-reload
+systemctl enable zookeeper
+systemctl stop zookeeper
+systemctl start zookeeper
+systemctl status zookeeper
+
+# No M2
+
+ssh m2
+systemctl daemon-reload
+systemctl enable zookeeper
+systemctl stop zookeeper
+systemctl start zookeeper
+systemctl status zookeeper
+exit
+
+# No M3
+
+ssh m3
+systemctl daemon-reload
+systemctl enable zookeeper
+systemctl stop zookeeper
+systemctl start zookeeper
+systemctl status zookeeper
+exit
+```
+
+```bash
+# Comando para exibir os processos Java em todos os nós usando pdsh e filtrar por "quorum"
+pdsh jps | sort | grep -i quorum
+# Saída exemplar:
+# m1: 10082 QuorumPeerMain
+# m2: 2366 QuorumPeerMain
+# m3: 1690 QuorumPeerMain
+
+# Comando para verificar o status do ZooKeeper em todos os nós usando zkServer.sh e filtrar por "Mode"
+zkServer.sh status | grep "Mode:"
+
+# Comando para acessar a interface de linha de comando do ZooKeeper nos servidores especificados (m1, m2, m3)
+zkCli.sh -server m1,m2,m3
+
+```
+
