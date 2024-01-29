@@ -2841,3 +2841,564 @@ zkCli.sh -server m1,m2,m3
 
 ```
 
+## 27 - Teoria Apache Pig
+
+### Conceito
+
+O Apache Pig é uma linguagem de script de alto nível projetada para ser usada com o Apache Hadoop. Ele oferece uma abordagem simplificada para escrever transformações complexas de dados sem a necessidade de conhecimento profundo em Java. A linguagem específica do Pig é chamada Pig Latin, e sua simplicidade a torna atrativa para desenvolvedores familiarizados com SQL e linguagens de script.
+
+- **Completo e Flexível:**
+  - O Pig é completo, permitindo realizar todas as manipulações de dados necessárias no ambiente Hadoop. A capacidade de utilizar Funções Definidas pelo Usuário (UDFs) em idiomas como JRuby, Python e Java amplia sua flexibilidade. Também é possível incorporar scripts Pig em outros idiomas, tornando-o um componente valioso para construir aplicativos mais extensos e complexos.
+- **Processamento de Dados:**
+  - O Pig lida com dados provenientes de diversas fontes, incluindo dados estruturados e não estruturados. Os resultados das operações podem ser armazenados no Hadoop Data File System. Os scripts Pig são convertidos em tarefas MapReduce executadas no cluster Apache Hadoop.
+
+### Porque Pig?
+
+O Apache Pig surgiu da necessidade de simplificar o desenvolvimento no ecossistema Hadoop, especialmente para programadores menos familiarizados com Java, que enfrentavam desafios ao executar tarefas MapReduce. Com a introdução do Pig Latin, a complexidade dos códigos Java foi substituída por uma abordagem mais amigável.
+
+- **Facilidade de Desenvolvimento:**
+  - O Pig Latin reduz significativamente o comprimento dos códigos, utilizando uma abordagem de várias consultas. Isso resulta em uma redução notável no tempo de desenvolvimento, até 16 vezes menor. A semelhança do Pig Latin com SQL facilita a transição para programadores com conhecimento prévio em SQL.
+- **Operações Integradas:**
+  - O Pig suporta uma variedade de operações de dados essenciais, como filtros, junções e ordenações. Isso simplifica ainda mais o processo de manipulação e processamento de dados no ambiente Hadoop.
+
+### Recursos do Pig
+
+- **Operadores embutidos**: O Apache Pig fornece um conjunto muito bom de operadores para executar várias operações de dados como classificação, junção, filtro, etc. 
+
+- **Facilidade de programação**: Como o Pig Latin tem semelhanças com o SQL, é muito fácil escrever um script do Pig.
+- **Otimização automática**: as tarefas no Apache Pig são otimizadas automaticamente. Isso faz com que os programadores se concentrem apenas na semântica da linguagem.
+- **Manipula todos os tipos de dados**: O Apache Pig pode analisar dados estruturados e não estruturados e armazenar os resultados no HDFS.
+
+### Estrutura
+
+<img src="_images/2601.png"></img>
+
+1. **Analisador:**
+   - Verifica a sintaxe do script Pig Latin.
+   - Gera um DAG (gráfico acíclico direcionado) com instruções Pig Latin e operadores lógicos.
+2. **Otimizador:**
+   - Recebe o DAG do analisador.
+   - Realiza otimizações lógicas no plano, melhorando a eficiência da execução.
+3. **Compilador:**
+   - Converte o plano lógico otimizado em tarefas MapReduce.
+4. **Mecanismo de Execução:**
+   - Envia tarefas MapReduce ao Hadoop.
+   - Executa tarefas ordenadas no Hadoop para produzir o resultado desejado.
+
+<img src="_images/2602.png" width="30%"></img>
+
+### Usando PIG no cluster
+
+```bash
+cd /opt
+
+wget -c https://downloads.apache.org/pig/pig-0.17.0/pig-0.17.0.tar.gz
+
+tar zxvf pig-0.17.0.tar.gz
+
+mv pig-0.17.0 pig
+
+vim /etc/profile.d/pig.sh
+
+# Adiciona as seguintes linhas ao arquivo pig.sh
+export PIG_HOME=/opt/pig
+export PATH=$PATH:/opt/pig/bin
+export PIG_CLASSPATH=$HADOOP_CONF_DIR
+
+# Atualiza as configurações do perfil de usuário
+source /etc/profile.d/pig.sh
+
+# Copia o arquivo pig.sh para os servidores m2 e m3 no diretório /etc/profile.d/
+scp /etc/profile.d/pig.sh m2:/etc/profile.d/
+scp /etc/profile.d/pig.sh m3:/etc/profile.d/
+
+# Sincroniza o diretório /opt/pig para os servidores m2 e m3 usando rsync
+/usr/bin/rsync -avz /opt/pig m2:/opt
+/usr/bin/rsync -avz /opt/pig m3:/opt
+
+pdsh -w m[1-3] pig -version | sort
+```
+
+```bash
+cat /etc/passwd
+# rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin
+
+# O comando 'cat /etc/passwd' exibe informações sobre usuários no sistema. O formato geral é:
+# username:password:UID:GID:User Info:Home Directory:Login Shell
+
+# Trecho Específico:
+# rpc:                Nome de usuário associado a esta entrada (rpc).
+# x:                  Senha criptografada. 'x' indica que a senha está em /etc/shadow.
+# 32:                 UID (User ID), identificador único do usuário (32).
+# 32:                 GID (Group ID), identificador único do grupo principal (32).
+# Rpcbind Daemon:    Informações sobre o usuário (Rpcbind Daemon).
+# /var/lib/rpcbind:  Diretório principal do usuário (home directory).
+# /sbin/nologin:     Shell de login permitido. '/sbin/nologin' indica login não permitido.
+```
+
+### Pig em Modo MapReduce - Testes básicos
+
+```bash
+# Lista o conteúdo do diretório raiz no HDFS
+hdfs dfs -ls /
+
+# Inicia o shell do Pig
+pig
+
+# Navega até o diretório hdfs:///
+grunt> cd hdfs:///
+
+# Lista o conteúdo do diretório no HDFS
+grunt> ls
+
+# Cria um diretório chamado 'teste'
+grunt> mkdir teste
+
+# Navega até o diretório 'teste'
+grunt> cd teste
+
+# Copia o arquivo /etc/passwd do sistema local para o HDFS no diretório 'teste'
+grunt> copyFromLocal /etc/passwd/ passwd
+
+# Lista o conteúdo do diretório 'teste'
+grunt> ls
+
+# Carrega o arquivo 'passwd' usando PigStorage e define os campos
+grunt> passwd = LOAD 'passwd' USING PigStorage(':') AS (user:chararray, passwd:chararray, uid:int, gid:int, userinfo:chararray, home:chararray, shell:chararray);
+
+# Exibe o conteúdo carregado
+grunt> DUMP passwd;
+
+# Agrupa os dados pelo campo 'shell'
+grunt> grp_shell = GROUP passwd BY shell;
+
+# Exibe o conteúdo dos grupos
+grunt> DUMP grp_shell;
+
+# Calcula a contagem de registros em cada grupo
+grunt> counts = FOREACH grp_shell GENERATE group, COUNT(passwd);
+
+# Exibe a contagem de registros por grupo
+grunt> DUMP counts;
+```
+
+### Selecionando Jogadores para um combate de Pokemon com Pig
+
+Criar uma lista de 5 pokémons selecionados aleatoriamente baseado em um parâmetro onde o poder de defesa de um pokémon deve ser >55. Vamos filtrar e interligar os pokémons para uma batalha.
+
+```bash
+# Carregando Dados no HDFS
+
+# Inicia o shell do Pig
+pig
+
+# Navega até o diretório raiz no HDFS
+cd hdfs:///
+
+# Cria um diretório chamado 'pokemon'
+mkdir pokemon
+
+cd pokemon
+
+# Copia o arquivo local /root/pokemon.csv para o HDFS no diretório 'pokemon'
+copyFromLocal /root/pokemon.csv pokemon.csv
+```
+
+```bash
+# Carregando a Lista no Pig
+
+# Carrega os dados do arquivo 'pokemon.csv' usando PigStorage, definindo os campos
+load_data = LOAD 'pokemon.csv' USING PigStorage(',') AS(Sno:int,Name:chararray,Type1:chararray,Type2:chararray,Total:int,HP:int,Attack:int,Defense:int,SpAtk:int,SpDef:int,Speed:int);
+
+# Exibe a descrição (schema) dos dados carregados
+Describe load_data
+
+# Separa os Pokémons com defesa maior que 55
+
+# Filtra os dados carregados para incluir apenas os Pokémons com defesa maior que 55
+selected_list = FILTER load_data BY Defense>55;
+
+# Exibe os resultados do filtro
+dump selected_list;
+```
+
+**Indique o número de jogadores que participam da competição depois de serem selecionados na rodada de qualificação.**
+
+```bash
+# Agrupando e Contando Pokémons Selecionados
+
+# Agrupa todos os Pokémons selecionados
+selected_list_group = GROUP selected_list ALL;
+
+# Calcula a contagem total de Pokémons no grupo
+selected_list_count = FOREACH selected_list_group GENERATE COUNT(selected_list);
+
+# Exibe a contagem total de Pokémons selecionados
+DUMP selected_list_count;
+
+# Resultado: (544)
+# O conjunto de dados é filtrado e, portanto, de todos os 800 Pokémons, apenas 544 são elegíveis para participar do torneio.
+```
+
+**Portanto, todos os 544 jogadores participantes serão organizados em ordem alfabética e duas equipes de 5 Pokémons precisam ser extraídas  aleatoriamente da lista anterior. Dessa forma teremos 2 listas contendo 5 Pokémon cada para lutar um contra o outro.**
+
+Usar **random ()** gera números aleatórios para cada Pokémon na lista selecionada.
+
+```Bash
+# Gerando Números Aleatórios e Organizando Dados
+
+# Gera uma coluna de números aleatórios para cada Pokémon selecionado
+random_time1 = FOREACH selected_list GENERATE RANDOM(), Name, Type1, Type2, Total, HP, Attack, Defense, SpAtk, SpDef, Speed;
+
+# Exibe os resultados
+DUMP random_time1;
+
+# Organiza os resultados pela coluna de números aleatórios em ordem decrescente
+random_time1_organizada = ORDER random_time1 BY $0 DESC;
+
+# Exibe os resultados organizados
+DUMP random_time1_organizada;
+```
+
+**No entanto, queremos mais uma lista com arranjos aleatórios de Pokémons que será, portanto, escolhidos pelo 2 nd jogador mais tarde.**
+
+Agora, em uma **nova relação**, associe novamente números aleatórios para cada Pokémon e organize-os em ordem decrescente de acordo com a coluna aleatória.
+
+```bash
+# Gerando Números Aleatórios e Organizando Dados (Equipe 2)
+
+# Gera uma coluna de números aleatórios para cada Pokémon selecionado (Equipe 2)
+random_time2 = FOREACH selected_list GENERATE RANDOM(), Name, Type1, Type2, Total, HP, Attack, Defense, SpAtk, SpDef, Speed;
+
+# Exibe os resultados (Equipe 2)
+DUMP random_time2;
+
+# Organiza os resultados pela coluna de números aleatórios em ordem decrescente (Versão 2)
+random_time2_organizada = ORDER random_time2 BY $0 DESC;
+
+# Exibe os resultados organizados (Equipe 2)
+DUMP random_time2_organizada;
+
+```
+
+**Nas duas listas descendentes diferentes de Pokémons aleatórios, selecione os 5 Pokémons para 2 jogadores diferentes.**
+
+```bash
+# Selecionando os 5 Primeiros Pokémons Organizados Aleatoriamente
+
+# Seleciona os 5 primeiros Pokémons da lista organizada aleatoriamente (Equipe 1)
+select5_time1 = LIMIT random_time1_organizada 5;
+
+# Exibe os resultados da seleção (Equipe 1)
+DUMP select5_time1;
+
+# Seleciona os 5 primeiros Pokémons da lista organizada aleatoriamente (Equipe 2)
+select5_time2 = LIMIT random_time2_organizada 5;
+
+# Exibe os resultados da seleção (Equipe 2)
+DUMP select5_time2;
+```
+
+**Armazene os dados em uma unidade local para anunciar a partida final. Pelo nome player1 e player2 (mostre apenas NAME e HP).**
+
+```bash
+# Filtrando e Armazenando Dados Selecionados
+
+# Filtra apenas o nome e o HP dos Pokémons selecionados (Equipe 1)
+filtro_somente_nome1 = FOREACH select5_time1 GENERATE ($1, HP);
+DUMP filtro_somente_nome1;
+
+# Filtra apenas o nome e o HP dos Pokémons selecionados (Equipe 2)
+filtro_somente_nome2 = FOREACH select5_time2 GENERATE ($1, HP);
+DUMP filtro_somente_nome2;
+
+# Armazena os resultados do filtro (nome e HP) no diretório 'time1' e 'time2'
+STORE filtro_somente_nome1 INTO 'time1';
+STORE filtro_somente_nome2 INTO 'time2';
+
+# Armazena os 5 primeiros Pokémons completos no arquivo
+STORE select5_time1 INTO 'player1.txt';
+STORE select5_time2 INTO 'player2.txt';
+```
+
+**Visualizando os resultados**
+
+```bash
+ls
+
+cat time1
+cat time2
+cat player1.txt
+cat player2.txt
+
+copyToLocal time1 /root/pokemons
+copyToLocal time2 /root/pokemons
+copyToLocal player1.txt /root/pokemons
+copyToLocal player2.txt /root/pokemons
+```
+
+### Conversão de arquivo - XML p/ CSV
+
+```bash
+Convertendo arquivos XML em csv
+
+cd /root
+
+vim teste.xml
+
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>2</value>
+</property>
+<property>
+<name>dfs.namenode.name.dir</name>
+<value>/opt/hadoop/namenode</value>
+</property>
+<property>
+<name>dfs.datanode.data.dir</name>
+<value>/opt/hadoop/datanode</value>
+</property>
+<property>
+<name>dfs.block.size</name>
+<value>67108864</value>
+</property>
+</configuration>
+
+pig
+
+cd hdfs:///
+ls
+
+mkdir conversao
+cd conversao
+
+copyFromLocal /root/xml_to_csv/teste.xml teste.xml
+
+ls
+
+A = load 'teste.xml' using org.apache.pig.piggybank.storage.XMLLoader('property') as (x:chararray);
+
+DESCRIBE A;
+
+B = foreach A generate REPLACE(x,'[\\n]','') as x;
+
+dump;
+
+# Aqui estamos trazendo o conteúdo entre a tag de propriedade em uma linha. 
+
+C = foreach B generate REGEX_EXTRACT_ALL(x,'.*(?:<name>)([^<]*).*(?:<value>)([^<]*).*');
+
+Agora estamos removendo os colchetes usando a expressão regular acima mencionada.
+
+D = FOREACH C GENERATE FLATTEN (($0));
+
+
+Aqui, usando o achatamento, os suportes restantes serão removidos. Agora, o resultado final se parece com isso. 
+A saída acima será armazenada em um arquivo usando o carregador CSV disponível no pig usando o comando abaixo:
+
+STORE D INTO 'xml_to_csv.txt' USING org.apache.pig.piggybank.storage.CSVExcelStorage();
+
+ls
+
+cat xml_to_csv.txt
+
+copyToLocal xml_to_csv.txt /root/xml_to_csv
+```
+
+```bash
+# Criando o arquivo XML usando o editor Vim
+vim teste.xml
+
+# Preenchendo o arquivo XML com um exemplo de configuração
+# <configuration>
+# <property>
+# <name>dfs.replication</name>
+# <value>2</value>
+# </property>
+# <property>
+# <name>dfs.namenode.name.dir</name>
+# <value>/opt/hadoop/namenode</value>
+# </property>
+# <property>
+# <name>dfs.datanode.data.dir</name>
+# <value>/opt/hadoop/datanode</value>
+# </property>
+# <property>
+# <name>dfs.block.size</name>
+# <value>67108864</value>
+# </property>
+# </configuration>
+
+# Iniciando o Pig
+pig
+
+# Mudando para o diretório raiz do HDFS
+cd hdfs:///
+
+mkdir xml_to_csv
+cd xml_to_csv
+
+# Copiando o arquivo XML local para o diretório atual no HDFS
+copyFromLocal /root/xml_to_csv/teste.xml teste.xml
+
+# Carregando o arquivo XML usando o Pig XMLLoader e renomeando a coluna resultante como 'x'
+A = load 'teste.xml' using org.apache.pig.piggybank.storage.XMLLoader('property') as (x:chararray);
+
+# Descrevendo a estrutura do conjunto de dados resultante
+DESCRIBE A;
+# A: {x: chararray}
+
+# Removendo caracteres de nova linha (\n) usando a função REPLACE
+B = foreach A generate REPLACE(x,'[\\n]','') as x;
+
+# Extraindo conteúdo entre as tags <name> e <value> usando a expressão regular
+C = foreach B generate REGEX_EXTRACT_ALL(x,'.*(?:<name>)([^<]*).*(?:<value>)([^<]*).*');
+
+# Achatando a tupla gerada para remover suportes restantes
+D = FOREACH C GENERATE FLATTEN(($0));
+
+# Armazenando o resultado final no arquivo 'xml_to_csv.txt' usando o carregador CSV do Pig
+STORE D INTO 'xml_to_csv.txt' USING org.apache.pig.piggybank.storage.CSVExcelStorage();
+
+# Listando o conteúdo do diretório atual no HDFS
+ls
+
+# Exibindo o conteúdo do arquivo CSV no HDFS
+cat xml_to_csv.txt
+
+# Copiando o arquivo CSV do HDFS de volta para o sistema local
+copyToLocal xml_to_csv.txt /root/xml_to_csv
+```
+
+## 28 - Teoria Hive
+
+| ********************************             |                                                              |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| <img src="_images/2801.png" width=70%></img> | Usamos o Apache Hive quando precisarmos realizar consultas ou manipulações em grandes conjuntos de dados, tais como seleção de registros ou colunas, agregação, sumarização, contagem de elementos, filtros ou atualizações em massa. Essas tarefas não precisam ser feitas em tempo real e o que queremos é obter insights a partir de grande conjuntos de dados, Big Data. |
+
+- Não existe algumas funcionalidades de RDBMS (Não existe PK, FK, Trigger, ...)
+- Não suporta OLTP - Não busca transações em tempo real, como compras online
+- Não foi feito para consultas em tempo real e atualizações em nível de linha
+- Facilita o processo de ETL H
+- Schema-on-Read: Não preciso definir o schema antes de armazenar os dados no HDFS
+- Hive suporta a substituição ou a apreensão de dados, mas não as atualizações e exclusões
+- Três estruturas de dados: Tables, Partitions e Buckets
+	- As tabelas correspondem aos diretórios HDFS
+	- Que podem ser divididos em Partições
+	- Aonde os arquivos são divididos em Baldes
+
+### Arquitetura Hive
+
+1. **Command Line:**
+   - **Descrição:** A Command Line Interface (CLI) do Hive é uma interface de linha de comando que permite aos usuários interagir diretamente com o Hive usando comandos HiveQL. Os usuários podem executar consultas, gerenciar tabelas e realizar outras operações por meio da CLI.
+   - **Uso Típico:** Desenvolvedores e administradores usam a CLI para escrever e executar consultas HiveQL, além de realizar tarefas administrativas.
+2. **Hive Web Interface:**
+   - **Descrição:** A Hive Web Interface é uma interface baseada em navegador para interagir com o Hive. É uma interface gráfica que facilita a execução de consultas e a gestão de metadados do Hive. A Hive Web Interface permite que os usuários executem consultas sem a necessidade de comandos SQL.
+   - **Uso Típico:** Usuários menos técnicos, analistas de dados e administradores podem preferir a Hive Web Interface para realizar tarefas sem a necessidade de comandos SQL.
+3. **Thrift Server:**
+   - **Descrição:** O Hive Thrift Server é um servidor que permite que clientes externos se conectem e executem consultas Hive usando a linguagem de serviço Thrift. Isso possibilita que aplicativos externos, escritos em diferentes linguagens de programação, se comuniquem com o Hive para executar consultas e recuperar resultados.
+   - **Uso Típico:** Desenvolvedores de aplicativos externos podem usar o Thrift Server para integrar o Hive em seus aplicativos, permitindo consultas SQL em tempo real e a obtenção de resultados diretamente em seus aplicativos.
+
+<img src="_images/2802.png" width=40%></img>
+
+<img src="_images/2803.png" width=75%></img>
+
+### Tabelas internas e externas
+
+No Hive, é possível criar tabelas internas e externas para armazenar dados. A principal diferença entre elas está no que acontece com os dados quando a tabela é descartada. Vamos entender cada uma delas e, em seguida, apresentar exemplos de scripts.
+
+#### Tabelas Internas
+
+Tabelas internas são gerenciadas pelo Hive, o que significa que, ao descartar a tabela, os dados também serão excluídos permanentemente do sistema de arquivos.
+
+**Exemplo de Script**
+
+```sql
+-- Criação de uma tabela interna no Hive
+CREATE TABLE internal_table (
+  id INT,
+  name STRING,
+  age INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',';
+
+-- Inserção de dados na tabela interna
+INSERT INTO TABLE internal_table VALUES (1, 'Alice', 25), (2, 'Bob', 30);
+
+-- Consulta na tabela interna
+SELECT * FROM internal_table;
+```
+
+#### Tabelas externas
+
+Tabelas externas são tabelas que referenciam dados existentes no sistema de arquivos, mas o Hive não gerencia esses dados. Ao descartar uma tabela externa, os dados no sistema de arquivos permanecem intactos.
+
+**Exemplo de Script**
+
+```sql
+-- Criação de uma tabela externa no Hive
+CREATE EXTERNAL TABLE external_table (
+  id INT,
+  name STRING,
+  age INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/user/hive/warehouse/external_table';
+
+-- Local onde os dados existem no sistema de arquivos
+-- Os dados podem ser colocados manualmente neste diretório
+
+-- Consulta na tabela externa
+SELECT * FROM external_table;
+```
+
+### Partições
+
+Partições são uma maneira de dividir uma tabela em subdiretórios com base nos valores de uma ou mais colunas
+
+<img src="_images/2804.png" width=75%></img>
+
+```sql
+-- Criação de uma tabela particionada por coluna 'year'
+CREATE TABLE partitioned_table (
+  id INT,
+  name STRING,
+  age INT
+)
+PARTITIONED BY (year INT)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',';
+
+-- Inserção de dados particionados
+INSERT INTO TABLE partitioned_table PARTITION (year=2022) VALUES (1, 'Alice', 25), (2, 'Bob', 30);
+INSERT INTO TABLE partitioned_table PARTITION (year=2023) VALUES (3, 'Charlie', 28), (4, 'David', 35);
+
+-- Consulta na tabela particionada
+SELECT * FROM partitioned_table WHERE year=2022;
+```
+
+#### Buckets
+
+Buckets são uma forma de dividir dados em arquivos menores com base em uma função de hash aplicada a uma ou mais colunas
+
+```sql
+-- Criação de uma tabela com buckets
+CREATE TABLE bucketed_table (
+  id INT,
+  name STRING,
+  age INT
+)
+CLUSTERED BY (id) INTO 4 BUCKETS
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',';
+
+-- Inserção de dados na tabela com buckets
+INSERT INTO TABLE bucketed_table VALUES (1, 'Alice', 25), (2, 'Bob', 30), (3, 'Charlie', 28), (4, 'David', 35);
+
+-- Consulta na tabela com buckets
+SELECT * FROM bucketed_table WHERE id=2;
+```
+
