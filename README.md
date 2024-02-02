@@ -3402,3 +3402,424 @@ INSERT INTO TABLE bucketed_table VALUES (1, 'Alice', 25), (2, 'Bob', 30), (3, 'C
 SELECT * FROM bucketed_table WHERE id=2;
 ```
 
+## 29 - Instalando Hive
+
+**Instalando MySQL**
+
+```bash
+# Adiciona o repositório MySQL Community no sistema
+yum localinstall \
+https://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm
+
+# Importa a chave GPG do MySQL para verificar a autenticidade dos pacotes
+rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+
+# Instala o servidor MySQL Community
+yum install mysql-community-server -y
+
+systemctl start mysqld.service
+systemctl enable mysqld.service
+
+# Verificar a senha temporária gerada durante a instalação do MySQL no arquivo de log.
+grep "temporary password" /var/log/mysqld.log
+
+# Executar o script de segurança do MySQL para configurar as opções de segurança.
+mysql_secure_installation
+
+# Durante a execução, será solicitada a senha temporária fornecida no passo anterior.
+# Em seguida, será solicitado que você configure uma nova senha para o usuário root do MySQL.
+```
+
+**Instalando o Hive**
+
+```bash
+wget -c https://downloads.apache.org/hive/hive-3.1.2/apache-hive-3.1.2-bin.tar.gz
+
+tar zxvf apache-hive-3.1.2-bin.tar.gz
+
+mv apache-hive-3.1.2-bin hive
+
+vim /etc/profile.d/hive.sh
+# Configurar variáveis de ambiente para o Hive
+export HIVE_HOME=/opt/hive
+export PATH=$HIVE_HOME/bin:$PATH
+export HIVE_CONF_DIR=$HIVE_HOME/conf
+export CLASSPATH=$CLASSPATH:$HADOOP_HOME/lib/*:.
+
+source /etc/profile.d/hive.sh
+```
+
+**Criando o ambiente pra suportar o Hive**
+
+```bash
+hdfs dfs -mkdir /tmp
+hdfs dfs -mkdir -p /user/hive/warehouse
+hdfs dfs -chmod g+w /tmp
+hdfs dfs -chmod g+w /user/hive/warehouse
+
+hdfs dfs -ls /user/hive
+```
+
+**Config. inicial**
+
+```bash
+# Entrar no diretório de configuração do Hive
+cd $HIVE_HOME/conf
+
+# Copiar o modelo de configuração do ambiente do Hive para um novo arquivo
+cp hive-env.sh.template hive-env.sh
+
+# Abrir o arquivo de configuração do ambiente do Hive para edição
+vim hive-env.sh
+
+# Após abrir o arquivo no editor de texto, adicionar a seguinte linha ao final do arquivo
+# export HADOOP_HOME=/opt/hadoop
+```
+
+**Criando o MetaStore**
+
+```sql
+-- Criação do banco de dados "metastore"
+CREATE DATABASE metastore;
+-- Utilização do banco de dados "metastore"
+USE metastore;
+-- Importação do esquema do Hive para o MySQL
+SOURCE /opt/hive/scripts/metastore/upgrade/mysql/hive-schema-3.1.0.mysql.sql;
+
+-- Criação de usuários e concessão de privilégios no MySQL
+CREATE USER 'hive'@'localhost' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'hive'@'localhost';
+
+CREATE USER 'hive'@'%' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'hive'@'%';
+
+CREATE USER 'hive'@'m1.local.br' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'hive'@'m1.local.br';
+
+CREATE USER 'root'@'localhost' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost';
+
+CREATE USER 'root'@'m1.local.br' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'m1.local.br';
+
+CREATE USER 'root'@'s1.local.br' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'s1.local.br';
+
+CREATE USER 'root'@'s2.local.br' IDENTIFIED BY 'LUIZdasilva123!';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'s2.local.br';
+
+-- Atualização das permissões
+FLUSH PRIVILEGES;
+
+-- Encerra a sessão
+EXIT;
+```
+
+```bash
+wget -c https://ftp.iij.ad.jp/pub/db/mysql/Downloads/Connector-J/mysql-connector-java-8.0.19.tar.gz
+tar zxvf mysql-connector-java-8.0.19.tar.gz
+
+cd /opt/mysql-connector-java-8.0.19
+
+# Copia o arquivo mysql-connector-java-8.0.19.jar para o diretório lib do Hive
+cp mysql-connector-java-8.0.19.jar $HIVE_HOME/lib/
+
+# Navega até o diretório de configuração do Hive
+cd $HIVE_HOME/conf 
+
+vim hive-site.xml
+```
+
+```xml
+<!-- Configurações para o Hive Metastore -->
+<configuration>
+
+  <!-- Configurações do banco de dados MySQL para o Metastore -->
+  <property>
+    <name>javax.jdo.option.ConnectionURL</name>
+    <value>jdbc:mysql://m1.local.br/metastore?createDatabaseIfNotExist=true</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionDriverName</name>
+    <value>com.mysql.jdbc.Driver</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionUserName</name>
+    <value>hive</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionPassword</name>
+    <value>LUIZdasilva123!</value>
+  </property>
+
+  <!-- Diretório no HDFS para o armazenamento de dados do Hive -->
+  <property>
+    <name>hive.metastore.warehouse.dir</name>
+    <value>hdfs://m1.local.br:9000/user/hive/warehouse</value>
+  </property>
+
+  <!-- Configurações de inicialização do DataNucleus -->
+  <property>
+    <name>datanucleus.fixedDatastore</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>datanucleus.autoStartMechanism</name>
+    <value>SchemaTable</value>
+  </property>
+
+  <!-- Configurações do Hive Metastore Thrift -->
+  <property>
+    <name>hive.metastore.uris</name>
+    <value>thrift://m1.local.br:9083</value>
+  </property>
+  <property>
+    <name>hive.metastore.schema.verification</name>
+    <value>true</value>
+  </property>
+
+  <!-- Configurações de concorrência do Hive -->
+  <property>
+    <name>hive.support.concurrency</name>
+    <value>true</value>
+  </property>
+
+  <!-- Configurações do ZooKeeper -->
+  <property>
+    <name>hive.zookeeper.quorum</name>
+    <value>m1.local.br,m2.local.br,m3.local.br</value>
+  </property>
+  <property>
+    <name>hive.zookeeper.client.port</name>
+    <value>2181</value>
+  </property>
+
+  <!-- Configurações do HiveServer2 Thrift -->
+  <property>
+    <name>hiver.server2.thrift.bind.host</name>
+    <value>m1.local.br</value>
+  </property>
+  <property>
+    <name>hive.server2.thrift.port</name>
+    <value>10000</value>
+  </property>
+  <property>
+    <name>hive.server2.thrift.http.port</name>
+    <value>10001</value>
+  </property>
+  <property>
+    <name>hive.server2.webui.host</name>
+    <value>0.0.0.0</value>
+  </property>
+  <property>
+    <name>hive.server2.webui.port</name>
+    <value>10002</value>
+  </property>
+  <property>
+    <name>hive.server2.webui.use.ssl</name>
+    <value>false</value>
+  </property>
+  <property>
+    <name>hive.server2.thrift.min.worker.threads</name>
+    <value>5</value>
+  </property>
+  <property>
+    <name>hive.server2.thrift.max.worker.threads</name>
+    <value>500</value>
+  </property>
+  <property>
+    <name>hive.server2.transport.mode</name>
+    <value>binary</value>
+  </property>
+
+  <!-- Configurações de proxy para usuários root e hue -->
+  <property>
+    <name>hadoop.proxyuser.root.groups</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.root.hosts</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.hue.groups</name>
+    <value>*</value>
+  </property>
+  <property>
+    <name>hadoop.proxyuser.hue.hosts</name>
+    <value>*</value>
+  </property>
+
+  <!-- Configurações de eventos de notificação do Metastore -->
+  <property>
+    <name>hive.metastore.event.db.notification.api.auth</name>
+    <value>false</value>
+  </property>
+
+  <!-- Configurações para habilitar/doAs no HiveServer2 -->
+  <property>
+    <name>hive.server2.enable.doAs</name>
+    <value>FALSE</value>
+    <description>
+      Setting this property to true will have HiveServer2 execute
+      Hive operations as the user making the calls to it.
+    </description>
+  </property>
+
+</configuration>
+```
+
+**Iniciando e testando o Hive**
+
+*url: http://192.168.1.21:10002/hiveserver2.jsp*
+
+```bash
+rm -rf /opt/hive/lib/guava-19.0.jar
+cp /opt/hadoop/share/hadoop/hdfs/lib/guava-27.0-jre.jar /opt/hive/lib/
+
+
+hive --service hiveserver2 &
+hive --service metastore &
+hive
+```
+
+```sql
+show databases;
+    
+CREATE TABLE teste (id int, nome string, idade int);
+SHOW TABLES;
+DROP TABLE teste;
+exit;
+```
+
+**Conectando via beeline**
+
+```bash
+# Inicia a interface de linha de comando Beeline para interagir com o HiveServer2
+beeline
+
+# Conecta-se ao HiveServer2 usando o driver JDBC do Hive
+# jdbc:hive2://m1.local.br:10000 - URL de conexão para o HiveServer2 na máquina m1.local.br, porta 10000
+# hive - Nome de usuário do Hive
+# LUIZdasilva123! - Senha do usuário do Hive
+# org.apache.hive.jdbc.HiveDriver - Classe do driver JDBC do Hive
+
+!connect jdbc:hive2://m1.local.br:10000 hive LUIZdasilva123! org.apache.hive.jdbc.HiveDriver
+```
+
+<img src="_images/2901.png" width=75%></img>
+
+**Instalando HCatalog**
+
+```bash
+vim /etc/profile.d/hcat.sh
+
+export HCAT_HOME=/opt/hive/hcatalog
+export PATH=$HCAT_HOME/bin:$PATH
+export PATH=$HCAT_HOME/sbin:$PATH
+
+source /etc/profile.d/hcat.sh
+
+hcat
+
+webhcat_server.sh start
+
+curl -i http://localhost:50111/templeton/v1/status
+
+http://m1.local.br:50111/templeton/v1/status
+```
+
+## 30 - Inserindo Dataset Flight Data no Hive
+
+```sql
+-- Cria um novo banco de dados chamado flight_data
+CREATE DATABASE flight_data;
+
+-- Utiliza o banco de dados recém-criado
+use flight_data;
+
+-- Cria uma tabela chamada flights para armazenar dados de voos
+CREATE TABLE flights (
+  flight_date DATE,
+  airline_code INT,
+  carrier_code STRING,
+  origin STRING,
+  dest STRING,
+  depart_time INT,
+  depart_delta INT,
+  depart_delay INT,
+  arrive_time INT,
+  arrive_delta INT,
+  arrive_delay INT,
+  is_cancelled BOOLEAN,
+  cancellation_code STRING,
+  distance INT,
+  carrier_delay INT,
+  weather_delay INT,
+  nas_delay INT,
+  security_delay INT,
+  late_aircraft_delay INT
+)
+-- Define o formato de linha como DELIMITED e o caractere de campo como '\t' (tabulação)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+-- Armazena os dados como um arquivo de texto
+STORED AS TEXTFILE;
+
+-- Cria uma tabela chamada airlines para armazenar dados das companhias aéreas
+CREATE TABLE airlines (
+  code INT,
+  description STRING
+)
+-- Define o formato de linha como DELIMITED e o caractere de campo como '\t' (tabulação)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+-- Armazena os dados como um arquivo de texto
+STORED AS TEXTFILE;
+
+-- Cria uma tabela chamada carriers para armazenar dados das transportadoras
+CREATE TABLE carriers (
+  code STRING,
+  description STRING
+)
+-- Define o formato de linha como DELIMITED e o caractere de campo como '\t' (tabulação)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+-- Armazena os dados como um arquivo de texto
+STORED AS TEXTFILE;
+
+-- Cria uma tabela chamada cancellation_reasons para armazenar dados dos motivos de cancelamento
+CREATE TABLE cancellation_reasons (
+  code STRING,
+  description STRING
+)
+-- Define o formato de linha como DELIMITED e o caractere de campo como '\t' (tabulação)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+-- Armazena os dados como um arquivo de texto
+STORED AS TEXTFILE;
+```
+
+```sql
+-- Exibe as tabelas disponíveis no banco de dados atual
+show tables;
+
+-- Carrega os dados do arquivo local '/root/flights/ontime_flights.tsv' para a tabela 'flights', substituindo qualquer dado existente
+LOAD DATA LOCAL INPATH '/root/flights/ontime_flights.tsv' OVERWRITE INTO TABLE flights;
+
+-- Carrega os dados do arquivo local '/root/flights/airlines.tsv' para a tabela 'airlines', substituindo qualquer dado existente
+LOAD DATA LOCAL INPATH '/root/flights/airlines.tsv' OVERWRITE INTO TABLE airlines;
+
+-- Carrega os dados do arquivo local '/root/flights/carriers.tsv' para a tabela 'carriers', substituindo qualquer dado existente
+LOAD DATA LOCAL INPATH '/root/flights/carriers.tsv' OVERWRITE INTO TABLE carriers;
+
+-- Carrega os dados do arquivo local '/root/flights/cancellation_reasons.tsv' para a tabela 'cancellation_reasons', substituindo qualquer dado existente
+LOAD DATA LOCAL INPATH '/root/flights/cancellation_reasons.tsv' OVERWRITE INTO TABLE cancellation_reasons;
+
+-- Executa consultas para exibir todos os registros das tabelas 'carriers', 'airlines', 'cancellation_reasons', e 'flights'
+select * from carriers;
+select * from airlines;
+select * from cancellation_reasons;
+select * from flights;
+```
+
