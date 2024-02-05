@@ -3823,3 +3823,451 @@ select * from cancellation_reasons;
 select * from flights;
 ```
 
+## 31 - Criando um DataBase via Beeline
+
+```bash
+# Inicia a interface de linha de comando do Hive chamada 'beeline'
+beeline
+
+# Conecta-se ao servidor Hive usando JDBC com os seguintes parâmetros:
+#   - jdbc:hive2://m1.local.br:10000: especifica o endereço e a porta do servidor Hive
+#   - hive: nome de usuário para a conexão
+#   - LUIZdasilva123!!: senha para a conexão
+#   - org.apache.hive.jdbc.HiveDriver: classe do driver JDBC para Hive
+!connect jdbc:hive2://m1.local.br:10000 hive LUIZdasilva123!! org.apache.hive.jdbc.HiveDriver
+```
+
+```sql
+-- Cria um banco de dados chamado 'hpc_treinamentos' se ele não existir
+-- Adiciona um comentário para o banco de dados indicando seu propósito
+-- Define o local físico onde os dados do banco de dados serão armazenados no HDFS
+-- Configura propriedades adicionais do banco de dados, como o criador e o destinatário
+CREATE DATABASE IF NOT EXISTS hpc_treinamentos
+COMMENT "Estudando BigData na hpc_treinamentos"
+LOCATION '/user/hive/warehouse/hpc_treinamentos_db'
+WITH DBPROPERTIES ('createdby'='vinicius.luiz', 'createdfor'='hpc_treinamentos');
+
+-- Exibe informações básicas sobre o banco de dados 'hpc_treinamentos'
+DESCRIBE DATABASE hpc_treinamentos;
+
+-- Exibe informações detalhadas, incluindo propriedades estendidas, sobre o banco de dados 'hpc_treinamentos'
+DESCRIBE DATABASE EXTENDED hpc_treinamentos;
+
+-- Altera as propriedades do banco de dados 'hpc_treinamentos'
+-- Neste caso, altera o proprietário do banco de dados para o papel (role) chamado 'admin'
+ALTER DATABASE hpc_treinamentos
+SET OWNER ROLE admin;
+```
+
+```sql
+-- Define o banco de dados 'hpc_treinamentos' como o banco de dados ativo para operações subsequentes
+USE hpc_treinamentos;
+
+-- Cria uma tabela chamada 'licoes' no banco de dados 'hpc_treinamentos' se ela não existir
+-- A tabela possui três colunas: ID (BIGINT), title (STRING) e link (STRING)
+-- Adiciona comentários para cada coluna e para a tabela em si
+-- Define o formato de linha como DELIMITED, especifica o caractere de campo e linha, e armazena os dados como arquivo de texto
+-- Define o local físico onde os dados da tabela serão armazenados no HDFS
+CREATE TABLE IF NOT EXISTS hpc_treinamentos.licoes (
+  ID BIGINT COMMENT 'ID para cada licao contribuida',
+  title STRING COMMENT 'titulo a ser mostrado aos usuarios',
+  link STRING COMMENT 'link para acessar a licao'
+)
+
+-- Define o formato de linha como DELIMITED, indicando que os registros são separados por um caractere específico
+-- Especifica o caractere que separa os campos dentro de cada registro, neste caso, o caractere '|'
+-- Especifica o caractere que indica o final de cada linha de registro, neste caso, a quebra de linha '\n'
+-- Define o formato de armazenamento como TEXTFILE, indicando que os dados da tabela serão armazenados como arquivos de texto
+-- Especifica o diretório físico onde os dados da tabela serão armazenados no HDFS (Hadoop Distributed File System)
+COMMENT 'Esta tabela ira armazenar dados relevantes as lições'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '|'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE
+LOCATION '/user/hive/warehouse/hpc_treinamentos_db/licoes';
+
+-- Insere valores na tabela 'licoes'
+INSERT INTO TABLE hpc_treinamentos.licoes
+VALUES (20353, 'Instalando o Hive no Ubuntu', 'journaldev.com/20353/install-apache-hive-ubuntu-hql-queries'),
+       (20358, 'Instalando o Hadoop no Ubuntu', 'journaldev.com/20358/install-hadoop-on-ubuntu');
+
+-- Executa uma consulta para exibir todos os registros da tabela 'licoes'
+SELECT * FROM hpc_treinamentos.licoes;
+```
+
+```bash
+# Lista os arquivos presentes no diretório do HDFS onde os dados da tabela 'licoes' estão armazenados
+hdfs dfs -ls /user/hive/warehouse/hpc_treinamentos_db/licoes
+# Exibe o conteúdo de todos os arquivos presentes no diretório do HDFS da tabela 'licoes'
+hdfs dfs -cat /user/hive/warehouse/hpc_treinamentos_db/licoes/*
+```
+
+**Praticando**
+
+Hive's Data Definition Language (DDL) é um subconjunto HQL que descreve a estrutura de dados do Hive para crias, deletar ou alterar esquemas de objetos tais como: bases de dados, tabelas, visões, partições e buckets. 
+
+A base de dados do Hive descreve uma coleção de tabelas que são usadas para um proposito similar ou pertencentes aos mesmos grupos. Se uma base de dados não for usada, a base de dados "default" será usada em /user/hive/warehouse no sistema de arquivos de HDFS 
+
+```sql
+-- Cria um banco de dados chamado 'myhivebook' se ele não existir
+-- Adiciona um comentário para o banco de dados indicando seu propósito ou descrição
+-- Define o local físico onde os dados do banco de dados serão armazenados no HDFS
+-- Configura propriedades adicionais do banco de dados, como o criador e a data de criação
+CREATE DATABASE IF NOT EXISTS myhivebook
+COMMENT 'hive database demo'
+LOCATION '/user/hive/warehouse'
+WITH DBPROPERTIES ('criador'='pitanga', 'date'='19-02-2020');
+```
+
+```sql
+-- Exibe a instrução SQL CREATE DATABASE para o banco de dados padrão 'default'
+SHOW CREATE DATABASE default;
+
+-- Exibe a lista de todos os bancos de dados disponíveis no Hive
+SHOW DATABASES;
+
+-- Exibe a lista de bancos de dados que correspondem ao padrão especificado ('my.*')
+SHOW DATABASES LIKE 'my.*';
+
+-- Descreve as propriedades e configurações do banco de dados padrão 'default'
+DESCRIBE DATABASE default;
+```
+
+Cada linha representa as informações de uma pessoa, e os campos estão separados por barras verticais ('|').
+
+```
+Pitanga|Cabo Frio,RJ|Masculino,50|Security:100|Diretor:Tecnologia
+Ewerton|Sao Paulo|Masculino,58|Telco:100|Telco:Lider,CTO:Lider
+Jonas|Americana|Masculino,59|GP:80|PMP:Lider,PMP:Arquiteto
+Nathalia|Sao Goncalo|Feminino,45|Vendas:89,RH:94|Vendas:Lider
+Vinicius|Recife,PE|Masculino,23|Lógica:87|Programador:Tecnologia
+```
+
+```bash
+# Conecta-se ao servidor Hive usando JDBC com os seguintes parâmetros:
+#   - -u: URL de conexão JDBC para o servidor Hive
+#   - "jdbc:hive2://m1.local.br:10000/default": URL de conexão JDBC específica, indicando o endereço e a porta do servidor Hive, e o banco de dados padrão ('default')
+beeline -u "jdbc:hive2://m1.local.br:10000/default"
+```
+
+#### Tipos de dados - Hive
+
+No Hive, os tipos de dados MAP, ARRAY e STRUCT são utilizados para representar estruturas de dados mais complexas em comparação com tipos de dados simples como STRING, INT, etc. Aqui estão as principais diferenças entre eles:
+
+1. **MAP:**
+   - O tipo de dados MAP é utilizado para representar um mapeamento ou associação entre chaves e valores.
+   - Cada elemento do MAP consiste em um par chave-valor, onde a chave e o valor podem ter tipos de dados diferentes.
+   - Pode ser utilizado para representar dados associativos, como pares de atributos e valores.
+2. **ARRAY:**
+   - O tipo de dados ARRAY é utilizado para representar uma sequência ordenada de elementos, todos do mesmo tipo.
+   - Cada elemento do ARRAY é identificado por um índice, começando do zero.
+   - É útil para representar listas ou conjuntos de valores relacionados.
+3. **STRUCT:**
+   - O tipo de dados STRUCT (ou estrutura) é utilizado para agrupar diferentes tipos de dados sob uma única estrutura.
+   - É semelhante a uma linha em uma tabela de banco de dados relacional, onde cada campo tem um nome associado e um tipo de dados correspondente.
+   - Pode ser utilizado para representar registros ou estruturas mais complexas.
+
+Exemplo para ilustrar a diferença entre eles:
+
+```sql
+-- Exemplo de MAP
+MAP<STRING, INT> myMap = map('chave1', 10, 'chave2', 20);
+
+-- Exemplo de ARRAY
+ARRAY<INT> myArray = array(1, 2, 3, 4, 5);
+
+-- Exemplo de STRUCT
+STRUCT<STRING, INT, BOOLEAN> myStruct = named_struct('nome', 'João', 'idade', 25, 'ativo', true);
+```
+
+**Criando a tabela**
+
+```sql
+CREATE TABLE empregados (
+  -- Coluna para armazenar o nome do empregado
+  nome STRING,
+  
+  -- Coluna para armazenar a localidade ou localidades do empregado como um array de strings
+  localidade ARRAY<STRING>,
+  
+  -- Coluna para armazenar o gênero e idade do empregado como uma estrutura (struct)
+  genero_idade STRUCT<gender:STRING, age:INT>,
+  
+  -- Coluna para armazenar habilidades e pontos associados como um mapa (map)
+  habilidades_pontos MAP<STRING, INT>,
+  
+  -- Coluna para armazenar cargos e arrays de strings associados como um mapa (map)
+  cargo MAP<STRING, ARRAY<STRING>>
+)
+-- Define o formato de linha como DELIMITED, onde os campos são separados por '|'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '|'
+-- Define o formato de itens da coleção (ARRAY) como delimitados por ','
+COLLECTION ITEMS TERMINATED BY ','
+-- Define o formato de chaves do mapa como delimitadas por ':'
+MAP KEYS TERMINATED BY ':'
+-- Armazena os dados como arquivo de texto
+STORED AS TEXTFILE;
+```
+
+**Alimentando a tabela**
+
+```sql
+-- Comando HiveQL para carregar dados de um arquivo externo (no caminho '/tmp/empregados.txt')
+-- e substituir os dados existentes na tabela 'empregados' (usando OVERWRITE)
+LOAD DATA INPATH '/tmp/empregados.txt'
+OVERWRITE INTO TABLE empregados;
+```
+
+**Consulta em um array**
+
+```sql
+SELECT
+  localidade[0] as Cidade,
+  localidade[1] as Estado,
+  localidade[2] as col_3
+FROM empregados;
+```
+
+| cidade      | estado | col_3 |
+| ----------- | ------ | ----- |
+| Cabo Frio   | RJ     | NULL  |
+| Sao Paulo   | NULL   | NULL  |
+| Americana   | NULL   | NULL  |
+| Sao Goncalo | NULL   | NULL  |
+| Recife      | PE     | NULL  |
+
+**Consulta em um Map**
+
+```sql
+SELECT
+nome, habilidades_pontos['Security'] as Security, habilidades_pontos['Telco'] as Telco,
+habilidades_pontos['GP'] as PMP,
+habilidades_pontos['Vendas'] as Vendas,
+habilidades_pontos['RH'] as RH,
+habilidades_pontos['Lógica'] as Logica
+FROM empregados;
+```
+
+A consulta extrai informações específicas dessa coluna para criar uma tabela resultante com os nomes dos empregados e as pontuações associadas a habilidades específicas. A tabela resultante mostra os nomes dos empregados e as pontuações associadas a habilidades específicas. Se uma habilidade não estiver presente para um empregado, o valor correspondente será NULL.
+
+| nome     | Security | Telco | PMP  | Vendas | RH   | Logica |
+| -------- | -------- | ----- | ---- | ------ | ---- | ------ |
+| Pitanga  | 100      | NULL  | NULL | NULL   | NULL | NULL   |
+| Ewerton  | NULL     | 100   | NULL | NULL   | NULL | NULL   |
+| Jonas    | NULL     | NULL  | 80   | NULL   | NULL | NULL   |
+| Nathalia | NULL     | NULL  | NULL | 89     | 94   | NULL   |
+| Vinicius | NULL     | NULL  | NULL | NULL   | NULL | 87     |
+
+**Agora vamos fazer uma consulta em um **`MAP<STRING,ARRAY<STRING>>`
+
+A coluna `cargo` parece ser do tipo MAP, onde as chaves representam categorias de cargos (como 'Diretor', 'Telco', 'PMP', 'Vendas', 'Programador') e os valores associados são ARRAYS de strings que indicam papéis específicos.
+
+| cargo                               |
+| ----------------------------------- |
+| {"Diretor":["Tecnologia"]}          |
+| {"Telco":["Lider"],"CTO":["Lider"]} |
+| {"PMP":["Lider"]}                   |
+| {"Vendas":["Lider"]}                |
+| {"Programador":["Tecnologia"]}      |
+
+```sql
+-- O código a seguir extrai o primeiro elemento (índice 0) do array associado à chave 'Programador' na coluna 'cargo' da tabela 'empregados'
+
+SELECT cargo['Programador'][0] FROM empregados;
+
+```
+
+```sql
+-- Para os quatro primeiros registros, o valor é NULL porque a chave 'Programador' não está presente ou o array associado está vazio.
+-- No quinto registro, o valor é 'Tecnologia', que é o primeiro elemento do array associado à chave 'Programador' para esse registro.
++-------------+
+|     _c0     |
++-------------+
+| NULL        |
+| NULL        |
+| NULL        |
+| NULL        |
+| Tecnologia  |
++-------------+
+```
+
+**Consulta em um STRUCT**
+
+```sql
+SELECT  genero_idade
+      , genero_idade.gender as gender
+      , genero_idade.age    as age
+  FROM empregados;
+```
+
+```sql
+-- Interpretação do resultado:
+-- - A coluna 'genero_idade' contém a estrutura completa com os campos 'gender' e 'age'.
+-- - As colunas 'gender' e 'age' mostram os valores extraídos separadamente para cada registro na tabela 'empregados'.
+
++----------------------------------+------------+------+
+|           genero_idade           |   gender   | age  |
++----------------------------------+------------+------+
+| {"gender":"Masculino","age":50}  | Masculino  | 50   |
+| {"gender":"Masculino","age":58}  | Masculino  | 58   |
+| {"gender":"Masculino","age":59}  | Masculino  | 59   |
+| {"gender":"Feminino","age":45}   | Feminino   | 45   |
+| {"gender":"Masculino","age":23}  | Masculino  | 23   |
++----------------------------------+------------+------+
+```
+
+## 32 - Criando uma base de recomendação de filmes no Hive
+
+#### Criando tabelas temporárias
+
+Quando utilizarmos o comando LOAD, usaremos o OpenCSVSerde, um SerDe projetado para ler arquivos CSV. SerDe trata-se de uma abreviação para Serializer/Deserializer. O Hive usa a interface SerDe para ler e escrever dados em qualquer formato customizado. **OpenCSVSerde trata todas as colunas como String**, então irei criar tabelas temporárias e carregar dados nessas tabelas utilizando o OpenCSVSerde, para então converter as colunas das tabelas para os tipos de dados adequados.
+
+```sql
+-- Comando LOAD utilizando OpenCSVSerde para ler arquivos CSV.
+-- OpenCSVSerde é um SerDe projetado para processar arquivos CSV.
+
+-- Criar tabelas temporárias (ratings_tmp e movies_tmp) usando OpenCSVSerde.
+CREATE TABLE ratings_tmp (
+  userId STRING,
+  movieId STRING,
+  rating STRING,
+  rating_timestamp STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+CREATE TABLE movies_tmp (
+  movieId STRING,
+  title STRING,
+  genres STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+CREATE TABLE tags_tmp (
+  userId  STRING,
+  movieId STRING,
+  tag     STRING,
+  tag_timestamp STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+CREATE TABLE links_tmp (
+   movieId STRING,
+   imbdId  STRING,
+   tmdbId  STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+CREATE TABLE links_tmp (
+   movieId STRING,
+   imbdId  STRING,
+   tmdbId  STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+CREATE TABLE genome_tags_tmp (
+   tagId STRING,
+   tag   STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+CREATE TABLE genome_scores_tmp (
+   movieId STRING,
+   tagId   STRING,
+   relevance   STRING
+) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' TBLPROPERTIES ("skip.header.line.count"="1");
+
+-- Carregar dados nas tabelas temporárias usando OpenCSVSerde.
+-- OpenCSVSerde trata todas as colunas como String.
+-- Posteriormente, as colunas serão convertidas para os tipos de dados adequados.
+```
+
+#### Carregando tabelas temporárias
+
+```sql
+-- Comandos para carregar dados em tabelas temporárias usando o comando LOAD DATA.
+-- Os dados estão localizados nos arquivos '/tmp/ml-latest/ratings.csv' e '/tmp/ml-latest/movies.csv'.
+
+-- Carregar dados do arquivo local (não está no HDFS) na tabela temporária
+
+LOAD DATA LOCAL INPATH '/tmp/ml-latest/ratings.csv' OVERWRITE INTO TABLE ratings_tmp;
+LOAD DATA LOCAL INPATH '/tmp/ml-latest/movies.csv' OVERWRITE INTO TABLE movies_tmp;
+LOAD DATA LOCAL INPATH '/tmp/ml-latest/tags.csv' OVERWRITE INTO TABLE tags_tmp;
+LOAD DATA LOCAL INPATH '/tmp/ml-latest/links.csv' OVERWRITE INTO TABLE links_tmp;
+LOAD DATA LOCAL INPATH '/tmp/ml-latest/genome-tags.csv' OVERWRITE INTO TABLE genome_tags_tmp;
+LOAD DATA LOCAL INPATH '/tmp/ml-latest/genome-scores.csv' OVERWRITE INTO TABLE genome_scores_tmp;
+```
+
+#### Carregando tabelas finais
+
+Quando examinado os dados, notei que os títulos que contém o caractere vírgula possuem um erro interessante. Por exemplo: o título é armazenado como “American President, The (1995)” em vez de “The American President (1995)”. 
+
+**Criando as tabelas**
+
+Criação de tabelas armazenadas no formato ORC, utilizando dados da tabelas temporárias
+
+```SQL
+CREATE TABLE movies STORED AS ORC 
+AS 
+SELECT 
+  CAST(movieid AS BIGINT) movieid,  -- Converte a coluna 'movieid' para o tipo BIGINT.
+  CASE 
+    WHEN title LIKE '%, The %'
+    THEN CONCAT('The ', regexp_replace(title, ', The ', ' '))  -- Adiciona "The " ao título que contém ", The ".
+    ELSE title 
+  END title,  -- Renomeia a coluna 'title'.
+  SPLIT(genres, '\\|') AS genres  -- Converte a coluna 'genres' para um array
+FROM 
+  movies_tmp;
+```
+
+```sql
+CREATE TABLE ratings STORED AS ORC 
+AS 
+SELECT 
+  userid,  -- Mantém a coluna 'userid'.
+  CAST(movieid AS BIGINT) movieid,  -- Converte a coluna 'movieid' para o tipo BIGINT.
+  CAST(rating AS DECIMAL) rating,  -- Converte a coluna 'rating' para o tipo DECIMAL.
+  CAST(rating_timestamp AS BIGINT) rating_timestamp  -- Converte a coluna 'rating_timestamp' para o tipo BIGINT.
+FROM 
+  ratings_tmp;
+```
+
+```sql
+CREATE TABLE tags STORED AS ORC 
+AS 
+SELECT 
+  userid,
+  CAST(movieid AS BIGINT) movieid,
+  tag,
+  CAST(tag_timestamp AS BIGINT) tag_timestamp
+FROM 
+  tags_tmp;
+```
+
+```sql
+CREATE TABLE links STORED AS ORC 
+AS 
+SELECT 
+ CAST(movieid AS BIGINT) movieid,
+ imbdId,
+ tmdbId
+FROM 
+  links_tmp;
+```
+
+```sql
+CREATE TABLE genome_tags STORED AS ORC 
+AS 
+SELECT 
+  tagId,
+  tag
+FROM 
+  genome_tags_tmp;
+```
+
+```sql
+CREATE TABLE genome_scores STORED AS ORC 
+AS 
+SELECT 
+  CAST(movieid AS BIGINT) movieid,
+  tagId,
+  CAST(relevance AS DECIMAL(10, 5)) relevance
+FROM 
+  genome_scores_tmp;
+```
+
